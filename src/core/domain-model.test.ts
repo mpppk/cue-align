@@ -1,5 +1,5 @@
 import { Result } from '@praha/byethrow'
-import { describe, expect, it } from 'vite-plus/test'
+import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
 import {
   DuplicateCueIdError,
@@ -10,7 +10,15 @@ import { createAlignmentSession } from './session'
 import type { AlignmentSession } from './session'
 import { createAlignmentState } from './state'
 import { markCurrent } from './transitions'
-import type { AlignmentError, Cue } from './index'
+import type {
+  CreateAlignmentSessionError,
+  CreateAlignmentStateError,
+  Cue,
+  MarkCurrentError,
+  MarkError,
+  SeekCueError,
+  SeekIndexError,
+} from './index'
 
 type TestCue = Cue & {
   label: string
@@ -23,7 +31,10 @@ const cues: ReadonlyArray<TestCue> = [
 ]
 
 const unwrapSession = (
-  result: Result.Result<AlignmentSession<TestCue>, AlignmentError>,
+  result: Result.Result<
+    AlignmentSession<TestCue>,
+    CreateAlignmentSessionError
+  >,
 ): AlignmentSession<TestCue> => {
   if (Result.isFailure(result)) {
     throw result.error
@@ -33,6 +44,31 @@ const unwrapSession = (
 }
 
 describe('alignment domain model', () => {
+  it('exposes precise Result error unions', () => {
+    expectTypeOf(createAlignmentState({ cues })).toEqualTypeOf<
+      Result.Result<import('./types').AlignmentState, CreateAlignmentStateError>
+    >()
+
+    expectTypeOf(createAlignmentSession({ cues })).toEqualTypeOf<
+      Result.Result<AlignmentSession<TestCue>, CreateAlignmentSessionError>
+    >()
+
+    const session = unwrapSession(createAlignmentSession({ cues }))
+
+    expectTypeOf(session.markCurrent(1)).toEqualTypeOf<
+      Result.Result<void, MarkCurrentError>
+    >()
+    expectTypeOf(session.mark('a', 1)).toEqualTypeOf<
+      Result.Result<void, MarkError>
+    >()
+    expectTypeOf(session.seekCue('a')).toEqualTypeOf<
+      Result.Result<void, SeekCueError>
+    >()
+    expectTypeOf(session.seekIndex(0)).toEqualTypeOf<
+      Result.Result<void, SeekIndexError>
+    >()
+  })
+
   it('rejects duplicate cue IDs', () => {
     const result = createAlignmentSession({
       cues: [
