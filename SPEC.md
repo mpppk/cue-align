@@ -31,10 +31,13 @@ v1 は以下を満たさなければならない。
 - 既知の順序付き Cue 列をタイムラインへリアルタイムにアラインできる。
 - Core ライブラリを React、DOM、ブラウザの media element、特定レンダリングシステムから独立させる。
 - Core が要求する Cue の契約を `id` のみに限定し、利用側が任意の追加プロパティを持つ Cue 型を使用できる。
+- Core の状態遷移を純粋関数としてテスト可能にする。
+- React 等から利用しやすい session facade を提供できる設計にする。
 - 記録された時刻を canonical な Alignment データとして扱う。
 - キーボードを中心とした高速なオーサリングを可能にする。
 - オーサリング中の undo と Cue 移動を可能にする。
 - Alignment が未完成でも保存・出力でき、後から再開できる。
+- 想定内の入力エラーを型で識別可能にする。
 - TypeScript から扱いやすく、JSON に容易にシリアライズできる形式とする。
 
 ---
@@ -54,6 +57,7 @@ v1 は以下を満たさなければならない。
 - Cue graph、分岐 script、順序のない Cue 集合
 - すべての Cue に対する独立した start/end 時刻の canonical 保存
 - 共同編集・複数ユーザー編集
+- サーバーへのメディア upload やクラウド保存
 
 これらは将来的に追加可能だが、基本となる **Cue → Mark** の Alignment モデルは維持する。
 
@@ -95,17 +99,9 @@ type SlideCue = Cue & {
 
 ```ts
 {
-  id: "line-1",
-  text: "Hello, world",
-  speaker: "Alice"
-}
-```
-
-```ts
-{
-  id: "slide-architecture",
-  slideId: "architecture",
-  title: "Architecture"
+  id: 'line-1',
+  text: 'Hello, world',
+  speaker: 'Alice',
 }
 ```
 
@@ -151,18 +147,31 @@ Cue 定義そのものは Alignment から分離する。
 
 Alignment は安定した `cueId` のみを参照するため、同じ Cue 列を別の音源、別テイク、別動画に対して再利用できる。また、Cue にアプリケーション固有プロパティを追加しても Alignment format は変化しない。
 
-### 4.4 AlignmentSession
+### 4.4 AlignmentState
 
-`AlignmentSession` は Alignment を作成・編集するための mutable な作業状態である。
+`AlignmentState` は編集中の Core 内部状態であり、永続化フォーマットではない。
 
-Session は以下を保持する。
+概念上、以下の情報を保持する。
 
-- 順序付き Cue 列
-- 既存の Mark 群
-- 現在の Cue を示す cursor
-- undo に必要な操作履歴
+```ts
+type AlignmentState = {
+  marksByCueId: ReadonlyMap<CueId, number>
+  currentIndex: number
+  history: readonly MarkHistoryEntry[]
+}
+```
 
-Session 自体は永続化フォーマットではない。
+`marksByCueId` は編集操作を効率よく行うための内部表現である。外部へ永続化するときは必ず `Alignment` の `Mark[]` に変換する。
+
+Cue ID から配列 index を引く lookup table を初期化時に構築してよい。
+
+### 4.5 AlignmentSession
+
+`AlignmentSession` は Alignment を作成・編集するための ergonomic な mutable facade である。
+
+Session は Core の canonical なロジックそのものではなく、後述する pure transition を包む利用者向け API と位置付ける。
+
+Session 自体は永続化フォーマットではなく、React の state management 機構でもない。
 
 ---
 
@@ -206,7 +215,9 @@ A.at <= B.at <= C.at
 
 同じ瞬間に複数の論理 Cue が開始するケースを許容するため、同一時刻は許可する。
 
-順序制約を破る操作は、Session の状態を変更せず失敗しなければならない。
+ある Cue を mark / re-mark するときは、その Cue より前にある最も近い Mark と、その Cue より後ろにある最も近い Mark を境界として検証すればよい。
+
+順序制約を破る操作は、状態を変更せず失敗しなければならない。
 
 ### 5.5 部分 Alignment
 
@@ -223,9 +234,7 @@ Alignment は未完成でもよい。
 v1 における canonical なタイミング情報は Cue の開始点を表す Mark のみとする。
 
 ```ts
-{
-  ;(cueId, at)
-}
+{ cueId, at }
 ```
 
 `end` は canonical データとして保存しない。
@@ -256,9 +265,43 @@ Cue A の意味上の終了時刻と Cue B の開始時刻が一致するとは�
 
 ---
 
-## 7. Headless Core API
+## 7. Headless Core の技術設計
 
-具体的な命名は実装時に調整可能だが、v1 は概ね以下と同等の API を提供する。
+### 7.1 Pure transition を中核とする
+
+Core の状態変更ロジックは、現在状態と操作を受け取り、新しい状態を返す純粋関数として実装する。
+
+概念例:
+
+```ts
+function markCurrent<TCue extends Cue>(
+  state: AlignmentState,
+  cues: readonly TCue[],
+  at: number,
+): Result<AlignmentState, AlignmentError>
+```
+
+同様に、少なくとも以下の transition を用意する。
+
+```ts
+markCurrent(state, cues, at)
+mark(state, cues, cueId, at)
+undo(state)
+seekCue(state, cues, cueId)
+seekIndex(state, cues, index)
+nextCue(state, cues)
+previousCue(state, cues)
+```
+
+Pure transition は React、DOM、browser API、global state に依存してはならない。
+
+この構造により、Core の invariant と undo behavior を deterministic な unit test で検証できる。
+
+### 7.2 Session facade
+
+利用側の記述量を減らすため、pure transition の上に `AlignmentSession` facade を提供してよい。
+
+概ね以下と同等の API とする。
 
 ```ts
 type CreateAlignmentSessionOptions<TCue extends Cue> = {
@@ -272,13 +315,13 @@ interface AlignmentSession<TCue extends Cue> {
   readonly currentCue: TCue | undefined
   readonly currentIndex: number
 
-  markCurrent(at: number): void
-  mark(cueId: CueId, at: number): void
+  markCurrent(at: number): Result<void, AlignmentError>
+  mark(cueId: CueId, at: number): Result<void, AlignmentError>
 
   undo(): boolean
 
-  seekCue(cueId: CueId): void
-  seekIndex(index: number): void
+  seekCue(cueId: CueId): Result<void, AlignmentError>
+  seekIndex(index: number): Result<void, AlignmentError>
   nextCue(): void
   previousCue(): void
 
@@ -289,39 +332,56 @@ interface AlignmentSession<TCue extends Cue> {
 
 function createAlignmentSession<TCue extends Cue>(
   options: CreateAlignmentSessionOptions<TCue>,
-): AlignmentSession<TCue>
+): Result<AlignmentSession<TCue>, AlignmentError>
 ```
 
 この generic により、Core は `id` のみを利用しながら、アプリケーション固有の Cue 型を失わずに保持できる。
 
-例えば次のコードでは `currentCue` は `LyricCue | undefined` として推論される。
+Session facade の mutable state は pure transition の結果によってのみ更新する。
 
-```ts
-const session = createAlignmentSession({ cues: lyricCues })
-const current = session.currentCue
-```
+### 7.3 React との境界
 
-### 7.1 `markCurrent(at)`
+Reference app では Session facade の mutation を React が自動検知するとは仮定しない。
+
+React adapter / hook は次のいずれかで状態変更を React に伝播する。
+
+- pure transition の `AlignmentState` を React state として保持する。
+- Session facade を包み、mutation 後に snapshot を更新する。
+
+Core に React subscription API を導入しない。
+
+### 7.4 `markCurrent(at)`
 
 `markCurrent(at)` は以下を行う。
 
 1. timestamp を検証する。
 2. current Cue と `at` を対応付ける。
-3. 順序制約に違反する場合は失敗する。
+3. 順序制約に違反する場合は `Result` の error を返す。
 4. `undo()` に必要な履歴を記録する。
 5. 次の Cue が存在すれば cursor を次へ進める。
 
 current Cue がすでに Mark 済みの場合は、同じ制約のもと既存 Mark を更新する。
 
-### 7.2 `mark(cueId, at)`
+### 7.5 `mark(cueId, at)`
 
 任意 Cue に timestamp を割り当てる headless primitive とする。
 
-`mark` 自体は current cursor を暗黙に移動しないことを推奨する。
+`mark` 自体は current cursor を暗黙に移動しない。
 
-### 7.3 `undo()`
+### 7.6 `undo()`
 
-現在 Session 内で直近に成功した Mark の変更を元に戻す。
+undo history は v1 では Mark mutation のみを対象とする。
+
+履歴は少なくとも次を保持する。
+
+```ts
+type MarkHistoryEntry = {
+  type: 'mark'
+  cueId: CueId
+  previousAt: number | undefined
+  previousCursorIndex: number
+}
+```
 
 通常フローで、
 
@@ -333,9 +393,9 @@ mark A -> mark B -> undo
 
 undo 対象がない場合は `false` を返す。
 
-v1 では cursor 移動のみの操作は undo 履歴へ含めなくてよい。
+v1 では cursor 移動のみの操作は undo 履歴へ含めない。
 
-### 7.4 Cue navigation
+### 7.7 Cue navigation
 
 `seekCue`、`seekIndex`、`nextCue`、`previousCue` は cursor のみを変更する。
 
@@ -345,7 +405,7 @@ Alignment データを変更してはならない。
 
 ## 8. クロック・メディアからの独立
 
-Core package はメディア再生を所有・制御してはならない。
+Core はメディア再生を所有・制御してはならない。
 
 現在時刻は呼び出し側から明示的に渡す。
 
@@ -364,13 +424,17 @@ session.markCurrent(audio.currentTime)
 - MIDI / 外部 timecode
 - deterministic fake clock を用いたテスト
 
-将来的に adapter package が特定 player との統合を提供してもよいが、media control は headless core の責務に含めない。
+Reference app で mark する際の source of truth は、React state に複製された再生時刻ではなく、Space 等の操作イベントが発生した瞬間の `HTMLMediaElement.currentTime` とする。
+
+画面表示用の current time は React state に保持してよいが、mark の timestamp には使用しない。
 
 ---
 
 ## 9. Reference authoring tool
 
-リポジトリには headless core を利用する小さなブラウザ向け reference app を含めることを推奨する。
+リポジトリには headless core を利用する小さなブラウザ向け reference app を含める。
+
+v1 ではサーバー側 persistence を持たず、ブラウザ内で完結する。
 
 ### 9.1 入力
 
@@ -384,28 +448,49 @@ Cue の初期 interchange format は JSON とする。
 
 Core の必須フィールドは `id` のみであり、それ以外のプロパティはアプリケーション側で自由に追加できる。
 
+Reference app 固有の convention として、optional な `label` を primary display text として扱う。
+
+```ts
+type ReferenceCue = Cue & {
+  label?: string
+  [key: string]: unknown
+}
+```
+
+表示時は次の優先順位とする。
+
+```text
+cue.label ?? cue.id
+```
+
+`label` は Core の契約ではなく Reference app の UI convention である。
+
+例:
+
 ```json
 [
-  { "id": "a", "text": "First cue" },
-  { "id": "b", "text": "Second cue" },
-  { "id": "c", "text": "Third cue" }
+  { "id": "a", "label": "First cue", "speaker": "Alice" },
+  { "id": "b", "label": "Second cue", "speaker": "Bob" },
+  { "id": "c", "label": "Third cue" }
 ]
 ```
 
-メディアはブラウザ上でローカルファイルとして読み込めればよい。
+メディアはブラウザ上でローカルファイルとして読み込む。`URL.createObjectURL()` を利用し、不要になった URL は revoke する。
 
-v1 ではサーバーへの upload を必須としない。
+Cue / Alignment JSON は `File.text()` 等でローカルに読み込む。
 
 ### 9.2 主画面
 
 最低限、次の情報を表示する。
 
+- メディア player
 - 現在の再生時刻
 - 前の Cue
 - 現在の Cue
 - 次の Cue
 - Cue 全体に対する進捗
 - current Cue がすでに Mark 済みかどうか
+- export 操作
 
 例:
 
@@ -424,9 +509,21 @@ C
 [ Space: Mark current cue ]
 ```
 
-Reference app は Cue の追加プロパティを表示するための configurable な formatter / renderer を持ってよい。
+`label` 以外の追加プロパティは詳細表示してよいが、Core はその意味や表示方法を定義しない。
 
-Core は `id` 以外のプロパティの意味や表示方法を定義しない。
+### 9.3 Route
+
+v1 は `/` の単一 route でよい。
+
+画面内部を概念的に以下の2状態として扱う。
+
+```text
+Setup
+  ↓
+Editor
+```
+
+Setup で Cue JSON / media / optional Alignment を読み込み、Editor で同期作業を行う。
 
 ---
 
@@ -434,16 +531,20 @@ Core は `id` 以外のプロパティの意味や表示方法を定義しない
 
 Reference app は以下の shortcut を提供する。
 
-| Key          | Action                                                  |
-| ------------ | ------------------------------------------------------- |
-| `Space`      | current Cue を現在の再生時刻で mark し、次の Cue へ進む |
-| `Backspace`  | 直近の Mark 変更を undo                                 |
-| `ArrowLeft`  | 前の Cue へ移動                                         |
-| `ArrowRight` | 次の Cue へ移動                                         |
+| Key | Action |
+| --- | --- |
+| `Space` | current Cue を現在の再生時刻で mark し、次の Cue へ進む |
+| `Backspace` | 直近の Mark 変更を undo |
+| `ArrowLeft` | 前の Cue へ移動 |
+| `ArrowRight` | 次の Cue へ移動 |
 
 Keyboard handling は Core ではなく UI の責務とする。
 
-入力フィールド等に focus がない状態で shortcut を処理した場合、Space による page scroll 等の browser default behavior は抑止する。
+以下を満たすこと。
+
+- handled shortcut では browser default behavior を `preventDefault()` する。
+- `event.repeat` による連続 mark を防止する。
+- `input`、`textarea`、`select`、`contenteditable` 等の編集可能要素に focus がある場合は global shortcut を処理しない。
 
 ---
 
@@ -475,46 +576,97 @@ Reference app は未完成の Alignment を含め、いつでも JSON export で
 
 ## 12. Error model
 
-入力・ユーザー操作によって通常発生し得るエラーは、UI 上の uncaught exception に依存せずプログラムから識別可能にする。
+入力・ユーザー操作によって通常発生し得るエラーは、exception のみで表現せず、discriminated union と `Result` でプログラムから識別可能にする。
 
-例:
+```ts
+type Result<T, E> =
+  | { ok: true; value: T }
+  | { ok: false; error: E }
+```
 
-- duplicate cue ID
-- import された Alignment 内の unknown cue ID
-- invalid timestamp
-- non-monotonic timestamp assignment
-- unsupported alignment version
-- invalid cue index
+概念上のエラー型は以下。
 
-具体的な TypeScript 上の error representation は v1 実装時に決定するが、各エラー種別は programmatically distinguishable でなければならない。
+```ts
+type AlignmentError =
+  | {
+      type: 'duplicate-cue-id'
+      cueId: CueId
+    }
+  | {
+      type: 'unknown-cue-id'
+      cueId: CueId
+    }
+  | {
+      type: 'invalid-time'
+      at: number
+    }
+  | {
+      type: 'non-monotonic-time'
+      cueId: CueId
+      at: number
+      min?: number
+      max?: number
+    }
+  | {
+      type: 'unsupported-alignment-version'
+      version: unknown
+    }
+  | {
+      type: 'invalid-cue-index'
+      index: number
+    }
+```
+
+Validation、mark、seek 等の expected failure は `Result` で返す。
+
+ライブラリ内部の programming error や invariant violation まで必ず `Result` 化する必要はない。
 
 ---
 
-## 13. 推奨リポジトリ構成
+## 13. リポジトリ構成
 
-初期構成案:
+現在の bootstrap は Bun + Vite+ + TanStack Start + React + Cloudflare Workers の単一アプリ構成である。
+
+v1 初期実装では monorepo 化せず、以下の構成を推奨する。
 
 ```text
 cue-align/
-  packages/
+  src/
     core/
-      src/
-  apps/
-    web/
-  examples/
+      types.ts
+      errors.ts
+      validation.ts
+      state.ts
+      transitions.ts
+      selectors.ts
+      session.ts
+      index.ts
+      *.test.ts
+
+    features/
+      alignment/
+        components/
+          MediaPlayer.tsx
+          CueViewer.tsx
+          CueNavigation.tsx
+          Progress.tsx
+          ExportButton.tsx
+        useAlignmentSession.ts
+        useAlignmentShortcuts.ts
+        useMedia.ts
+
+    routes/
+      __root.tsx
+      index.tsx
+
   SPEC.md
 ```
 
-将来的には以下の package を追加できる。
+`src/core/**` は React、DOM、TanStack、Cloudflare、`HTMLMediaElement` に依存してはならない。
 
-```text
-packages/
-  react/
-  waveform/
-  remotion/
-```
+将来 npm package として独立させる必要が生じた場合、`src/core` を `packages/core` へ移動する。
 
-これらは最初の実装では必須ではない。
+現在の test configuration は将来の `packages/*/src/**/*.test.*` も扱えるため、初期段階で workspace 化する必要はない。
 
 ---
 
@@ -621,23 +773,29 @@ Core を framework-independent に保ったまま、React、Remotion、各種 me
 2. **Headless core**  
    Core は React、DOM event、特定 media player に依存しない。
 
-3. **Minimal Cue contract**  
+3. **Pure transitions first**  
+   Core の invariant を担う状態変更は純粋関数として実装し、mutable session はその facade とする。
+
+4. **Minimal Cue contract**  
    Core が Cue に要求するのは安定した `id` のみとし、その他のアプリケーション固有プロパティは解釈せず具体型のまま保持する。
 
-4. **Stable ID over positional coupling**  
+5. **Stable ID over positional coupling**  
    Mark は Cue ID を参照し、Cue 配列は意図した順序を定義する。
 
-5. **Minimal canonical data**  
+6. **Minimal canonical data**  
    観測された timestamp のみを保存し、Cue のアプリケーション固有データや表示固有の区間・状態は Alignment に複製しない。
 
-6. **Fast human input first**  
+7. **Expected errors are values**  
+   ユーザー入力や通常操作で発生し得る失敗は discriminated union と `Result` で扱う。
+
+8. **Fast human input first**  
    リアルタイム同期の1パスは、基本的にメディアを再生し Cue ごとに1キー押すだけで完了できるようにする。
 
-7. **Correction is expected**  
+9. **Correction is expected**  
    Undo、navigation、save/resume、将来の精密編集を通常フローとして扱う。
 
-8. **Automation is additive**  
-   将来的な自動 Alignment も人間が生成するものと同じ Alignment format を使用する。
+10. **Automation is additive**  
+    将来的な自動 Alignment も人間が生成するものと同じ Alignment format を使用する。
 
 ---
 
@@ -645,19 +803,25 @@ Core を framework-independent に保ったまま、React、Remotion、各種 me
 
 最初の利用可能バージョンは、以下をすべて満たした時点で完成とする。
 
-1. `id` を持ち、任意の追加プロパティを含められる順序付き Cue 配列から Session を作成できる。
-2. Session を通して Cue の具体型が保持され、`currentCue` などから追加プロパティへ型安全にアクセスできる。
-3. Reference browser app で音声または動画を読み込める。
-4. メディアを再生し、Cue ごとに Space を押して同期できる。
-5. Space を押した瞬間のメディア時刻を Cue の Mark として記録できる。
-6. 誤った打刻を undo できる。
-7. Cue cursor を前後へ移動できる。
-8. 既存 Cue の Mark を修正できる。
-9. 未完成状態を含む Alignment を JSON として export できる。
-10. Export 済み Alignment を再度読み込み、作業を継続できる。
-11. 不正な Cue / Alignment を明示的な validation error として拒否できる。
-12. Core package が DOM、React、特定 media player、Remotion に依存しない。
-13. Alignment が Cue の追加プロパティを複製せず、downstream renderer から Cue ID と時刻の対応として利用できる。
+1. `id` を持ち、任意の追加プロパティを含められる順序付き Cue 配列を読み込める。
+2. Core の主要状態遷移が pure function として unit test されている。
+3. Session を通して Cue の具体型が保持され、`currentCue` などから追加プロパティへ型安全にアクセスできる。
+4. Expected error が `AlignmentError` と `Result` で識別可能である。
+5. Reference browser app でローカルの音声を読み込める。
+6. メディアを再生し、Cue ごとに Space を押して同期できる。
+7. Space を押した瞬間の `HTMLMediaElement.currentTime` を Cue の Mark として記録できる。
+8. `event.repeat` による意図しない連続 Mark が発生しない。
+9. 誤った打刻を undo できる。
+10. Cue cursor を前後へ移動できる。
+11. 既存 Cue の Mark を修正できる。
+12. 未完成状態を含む Alignment を JSON として export できる。
+13. Export 済み Alignment を再度読み込み、作業を継続できる。
+14. 不正な Cue / Alignment を明示的な validation error として拒否できる。
+15. Core が DOM、React、特定 media player、Remotion に依存しない。
+16. Alignment が Cue の追加プロパティを複製せず、downstream renderer から Cue ID と時刻の対応として利用できる。
+17. Reference app は `label ?? id` を primary Cue text として表示できる。
+
+Video 対応は `HTMLMediaElement` 共通 API を利用して audio の end-to-end フローが安定した後に追加してよい。
 
 ---
 
@@ -668,15 +832,26 @@ Core を framework-independent に保ったまま、React、Remotion、各種 me
 ```text
 Cue JSON
    +
-Audio / Video
+Audio file
    ↓
 Reference Authoring UI
    ↓
 Play
    ↓
-Space = markCurrent(media.currentTime)
+Space = markCurrent(audio.currentTime)
    ↓
 Alignment JSON
 ```
+
+推奨実装順序:
+
+1. `src/core` の型、validation、state、pure transition、selector、session facade
+2. Core unit test
+3. Cue JSON / optional Alignment の読み込み
+4. Audio file の local playback
+5. Space / Backspace / ArrowLeft / ArrowRight
+6. Alignment JSON export
+7. Video 対応
+8. UX 改善
 
 この最小フローを安定させた後に、波形編集、自動 Alignment、Remotion adapter などを追加する。
