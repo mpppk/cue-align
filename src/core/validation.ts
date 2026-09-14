@@ -7,8 +7,8 @@ import {
   InvalidTimeError,
   NonMonotonicTimeError,
   UnknownCueIdError,
-  type AlignmentError,
 } from './errors'
+import type { AlignmentError } from './errors'
 import type { Alignment, Cue, CueId } from './types'
 
 export const validateCues = <TCue extends Cue>(
