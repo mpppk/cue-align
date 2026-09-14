@@ -1,6 +1,12 @@
 import { Result } from '@praha/byethrow'
 
-import type { AlignmentError } from './errors'
+import type {
+  CreateAlignmentSessionError,
+  MarkCurrentError,
+  MarkError,
+  SeekCueError,
+  SeekIndexError,
+} from './errors'
 import { getAlignment, getCurrentCue, getMark, isComplete } from './selectors'
 import { createAlignmentState } from './state'
 import type { CreateAlignmentStateOptions } from './state'
@@ -19,11 +25,11 @@ export type AlignmentSession<TCue extends Cue> = {
   readonly cues: ReadonlyArray<TCue>
   readonly currentCue: TCue | undefined
   readonly currentIndex: number
-  markCurrent: (at: number) => Result.Result<void, AlignmentError>
-  mark: (cueId: CueId, at: number) => Result.Result<void, AlignmentError>
+  markCurrent: (at: number) => Result.Result<void, MarkCurrentError>
+  mark: (cueId: CueId, at: number) => Result.Result<void, MarkError>
   undo: () => boolean
-  seekCue: (cueId: CueId) => Result.Result<void, AlignmentError>
-  seekIndex: (index: number) => Result.Result<void, AlignmentError>
+  seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
+  seekIndex: (index: number) => Result.Result<void, SeekIndexError>
   nextCue: () => void
   previousCue: () => void
   getMark: (cueId: CueId) => Mark | undefined
@@ -33,7 +39,7 @@ export type AlignmentSession<TCue extends Cue> = {
 
 export const createAlignmentSession = <TCue extends Cue>(
   options: CreateAlignmentStateOptions<TCue>,
-): Result.Result<AlignmentSession<TCue>, AlignmentError> => {
+): Result.Result<AlignmentSession<TCue>, CreateAlignmentSessionError> => {
   const stateResult = createAlignmentState(options)
   if (Result.isFailure(stateResult)) {
     return Result.fail(stateResult.error)
