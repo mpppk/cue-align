@@ -8,12 +8,12 @@ import {
   NonMonotonicTimeError,
   UnknownCueIdError,
 } from './errors'
-import type { AlignmentError } from './errors'
+import type { ValidateAlignmentError, ValidateCuesError } from './errors'
 import type { Alignment, Cue, CueId } from './types'
 
 export const validateCues = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,
-): Result.Result<void, EmptyCueIdError | DuplicateCueIdError> => {
+): Result.Result<void, ValidateCuesError> => {
   const ids = new Set<CueId>()
 
   for (const [index, cue] of cues.entries()) {
@@ -44,7 +44,7 @@ export const validateTime = (
 export const validateAlignment = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,
   alignment: Alignment,
-): Result.Result<ReadonlyMap<CueId, number>, AlignmentError> => {
+): Result.Result<ReadonlyMap<CueId, number>, ValidateAlignmentError> => {
   const cueValidation = validateCues(cues)
   if (Result.isFailure(cueValidation)) {
     return Result.fail(cueValidation.error)
