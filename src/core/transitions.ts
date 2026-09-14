@@ -4,8 +4,8 @@ import {
   InvalidCueIndexError,
   NonMonotonicTimeError,
   UnknownCueIdError,
-  type AlignmentError,
 } from './errors'
+import type { AlignmentError } from './errors'
 import type { AlignmentState, Cue, CueId } from './types'
 import { validateTime } from './validation'
 
