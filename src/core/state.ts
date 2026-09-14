@@ -2,7 +2,14 @@ import { Result } from '@praha/byethrow'
 
 import { UnknownCueIdError } from './errors'
 import type { CreateAlignmentStateError } from './errors'
-import type { Alignment, AlignmentState, Cue, CueId } from './types'
+import { asCueIndex } from './types'
+import type {
+  Alignment,
+  AlignmentState,
+  Cue,
+  CueId,
+  TimelinePosition,
+} from './types'
 import { validateAlignment, validateCues } from './validation'
 
 export type CreateAlignmentStateOptions<TCue extends Cue> = {
@@ -16,7 +23,7 @@ export const createAlignmentState = <TCue extends Cue>(
 ): Result.Result<AlignmentState, CreateAlignmentStateError> => {
   const { cues, alignment, initialCueId } = options
 
-  let marksByCueId: ReadonlyMap<CueId, number>
+  let marksByCueId: ReadonlyMap<CueId, TimelinePosition>
 
   if (alignment === undefined) {
     const cueValidation = validateCues(cues)
@@ -34,13 +41,14 @@ export const createAlignmentState = <TCue extends Cue>(
     marksByCueId = alignmentValidation.value
   }
 
-  let currentIndex = 0
+  let currentIndex = asCueIndex(0)
 
   if (initialCueId !== undefined) {
-    currentIndex = cues.findIndex((cue) => cue.id === initialCueId)
-    if (currentIndex === -1) {
+    const index = cues.findIndex((cue) => cue.id === initialCueId)
+    if (index === -1) {
       return Result.fail(new UnknownCueIdError({ cueId: initialCueId }))
     }
+    currentIndex = asCueIndex(index)
   }
 
   return Result.succeed({

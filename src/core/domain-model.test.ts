@@ -10,14 +10,22 @@ import { createAlignmentSession } from './session'
 import type { AlignmentSession } from './session'
 import { createAlignmentState } from './state'
 import { markCurrent } from './transitions'
+import {
+  asCueId,
+  asCueIndex,
+  asTimelinePosition,
+} from './types'
 import type {
   CreateAlignmentSessionError,
   CreateAlignmentStateError,
   Cue,
+  CueId,
+  CueIndex,
   MarkCurrentError,
   MarkError,
   SeekCueError,
   SeekIndexError,
+  TimelinePosition,
 } from './index'
 import type { AlignmentState } from './types'
 
@@ -25,10 +33,21 @@ type TestCue = Cue & {
   label: string
 }
 
+type IsAssignable<From, To> = [From] extends [To] ? true : false
+
+const ids = {
+  a: asCueId('a'),
+  b: asCueId('b'),
+  c: asCueId('c'),
+}
+
+const position = (value: number): TimelinePosition => asTimelinePosition(value)
+const index = (value: number): CueIndex => asCueIndex(value)
+
 const cues: ReadonlyArray<TestCue> = [
-  { id: 'a', label: 'Alpha' },
-  { id: 'b', label: 'Beta' },
-  { id: 'c', label: 'Gamma' },
+  { id: ids.a, label: 'Alpha' },
+  { id: ids.b, label: 'Beta' },
+  { id: ids.c, label: 'Gamma' },
 ]
 
 const unwrapSession = (
@@ -42,6 +61,14 @@ const unwrapSession = (
 }
 
 describe('alignment domain model', () => {
+  it('brands domain primitives to prevent accidental interchange', () => {
+    expectTypeOf<IsAssignable<string, CueId>>().toEqualTypeOf<false>()
+    expectTypeOf<IsAssignable<number, TimelinePosition>>().toEqualTypeOf<false>()
+    expectTypeOf<IsAssignable<number, CueIndex>>().toEqualTypeOf<false>()
+    expectTypeOf<IsAssignable<TimelinePosition, CueIndex>>().toEqualTypeOf<false>()
+    expectTypeOf<IsAssignable<CueIndex, TimelinePosition>>().toEqualTypeOf<false>()
+  })
+
   it('exposes precise Result error unions', () => {
     expectTypeOf(createAlignmentState({ cues })).toEqualTypeOf<
       Result.Result<AlignmentState, CreateAlignmentStateError>
@@ -53,16 +80,16 @@ describe('alignment domain model', () => {
 
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    expectTypeOf(session.markCurrent(1)).toEqualTypeOf<
+    expectTypeOf(session.markCurrent(position(1))).toEqualTypeOf<
       Result.Result<void, MarkCurrentError>
     >()
-    expectTypeOf(session.mark('a', 1)).toEqualTypeOf<
+    expectTypeOf(session.mark(ids.a, position(1))).toEqualTypeOf<
       Result.Result<void, MarkError>
     >()
-    expectTypeOf(session.seekCue('a')).toEqualTypeOf<
+    expectTypeOf(session.seekCue(ids.a)).toEqualTypeOf<
       Result.Result<void, SeekCueError>
     >()
-    expectTypeOf(session.seekIndex(0)).toEqualTypeOf<
+    expectTypeOf(session.seekIndex(index(0))).toEqualTypeOf<
       Result.Result<void, SeekIndexError>
     >()
   })
@@ -70,8 +97,8 @@ describe('alignment domain model', () => {
   it('rejects duplicate cue IDs', () => {
     const result = createAlignmentSession({
       cues: [
-        { id: 'a', label: 'Alpha' },
-        { id: 'a', label: 'Another Alpha' },
+        { id: ids.a, label: 'Alpha' },
+        { id: ids.a, label: 'Another Alpha' },
       ],
     })
 
@@ -85,9 +112,9 @@ describe('alignment domain model', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
     expect(session.currentCue?.label).toBe('Alpha')
-    expect(Result.isSuccess(session.markCurrent(1.25))).toBe(true)
+    expect(Result.isSuccess(session.markCurrent(position(1.25)))).toBe(true)
     expect(session.currentCue?.label).toBe('Beta')
-    expect(session.getMark('a')).toEqual({ cueId: 'a', at: 1.25 })
+    expect(session.getMark(ids.a)).toEqual({ cueId: 'a', at: 1.25 })
   })
 
   it('keeps pure transitions immutable', () => {
@@ -97,56 +124,56 @@ describe('alignment domain model', () => {
     }
 
     const initialState = stateResult.value
-    const nextStateResult = markCurrent(initialState, cues, 1)
+    const nextStateResult = markCurrent(initialState, cues, position(1))
     if (Result.isFailure(nextStateResult)) {
       throw nextStateResult.error
     }
 
     expect(nextStateResult.value).not.toBe(initialState)
     expect(initialState.marksByCueId.size).toBe(0)
-    expect(nextStateResult.value.marksByCueId.get('a')).toBe(1)
+    expect(nextStateResult.value.marksByCueId.get(ids.a)).toBe(1)
   })
 
   it('rejects a mark that violates neighboring timestamps without mutating state', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    expect(Result.isSuccess(session.mark('a', 10))).toBe(true)
-    expect(Result.isSuccess(session.mark('c', 20))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.a, position(10)))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.c, position(20)))).toBe(true)
 
-    const result = session.mark('b', 21)
+    const result = session.mark(ids.b, position(21))
 
     expect(Result.isFailure(result)).toBe(true)
     if (Result.isFailure(result)) {
       expect(result.error).toBeInstanceOf(NonMonotonicTimeError)
     }
-    expect(session.getMark('b')).toBeUndefined()
+    expect(session.getMark(ids.b)).toBeUndefined()
   })
 
   it('allows re-marking a cue when the new timestamp remains ordered', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    expect(Result.isSuccess(session.mark('a', 10))).toBe(true)
-    expect(Result.isSuccess(session.mark('b', 20))).toBe(true)
-    expect(Result.isSuccess(session.mark('c', 30))).toBe(true)
-    expect(Result.isSuccess(session.mark('b', 25))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.a, position(10)))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.b, position(20)))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.c, position(30)))).toBe(true)
+    expect(Result.isSuccess(session.mark(ids.b, position(25)))).toBe(true)
 
-    expect(session.getMark('b')).toEqual({ cueId: 'b', at: 25 })
+    expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 25 })
   })
 
   it('undoes mark mutations and restores the previous cursor', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    session.markCurrent(10)
-    session.markCurrent(20)
+    session.markCurrent(position(10))
+    session.markCurrent(position(20))
 
     expect(session.currentCue?.id).toBe('c')
     expect(session.undo()).toBe(true)
     expect(session.currentCue?.id).toBe('b')
-    expect(session.getMark('b')).toBeUndefined()
+    expect(session.getMark(ids.b)).toBeUndefined()
 
     expect(session.undo()).toBe(true)
     expect(session.currentCue?.id).toBe('a')
-    expect(session.getMark('a')).toBeUndefined()
+    expect(session.getMark(ids.a)).toBeUndefined()
     expect(session.undo()).toBe(false)
   })
 
@@ -157,8 +184,8 @@ describe('alignment domain model', () => {
         alignment: {
           version: 1,
           marks: [
-            { cueId: 'b', at: 20 },
-            { cueId: 'a', at: 10 },
+            { cueId: ids.b, at: position(20) },
+            { cueId: ids.a, at: position(10) },
           ],
         },
       }),
@@ -180,8 +207,8 @@ describe('alignment domain model', () => {
       alignment: {
         version: 1,
         marks: [
-          { cueId: 'a', at: 20 },
-          { cueId: 'b', at: 10 },
+          { cueId: ids.a, at: position(20) },
+          { cueId: ids.b, at: position(10) },
         ],
       },
     })
@@ -194,7 +221,7 @@ describe('alignment domain model', () => {
 
   it('returns an error when seeking outside the cue list', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
-    const result = session.seekIndex(99)
+    const result = session.seekIndex(index(99))
 
     expect(Result.isFailure(result)).toBe(true)
     if (Result.isFailure(result)) {

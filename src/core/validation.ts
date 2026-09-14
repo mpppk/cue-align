@@ -9,7 +9,13 @@ import {
   UnknownCueIdError,
 } from './errors'
 import type { ValidateAlignmentError, ValidateCuesError } from './errors'
-import type { Alignment, Cue, CueId } from './types'
+import { asCueIndex } from './types'
+import type {
+  Alignment,
+  Cue,
+  CueId,
+  TimelinePosition,
+} from './types'
 
 export const validateCues = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,
@@ -18,7 +24,7 @@ export const validateCues = <TCue extends Cue>(
 
   for (const [index, cue] of cues.entries()) {
     if (cue.id.length === 0) {
-      return Result.fail(new EmptyCueIdError({ index }))
+      return Result.fail(new EmptyCueIdError({ index: asCueIndex(index) }))
     }
 
     if (ids.has(cue.id)) {
@@ -32,8 +38,8 @@ export const validateCues = <TCue extends Cue>(
 }
 
 export const validateTime = (
-  at: number,
-): Result.Result<number, InvalidTimeError> => {
+  at: TimelinePosition,
+): Result.Result<TimelinePosition, InvalidTimeError> => {
   if (!Number.isFinite(at) || at < 0) {
     return Result.fail(new InvalidTimeError({ at }))
   }
@@ -44,14 +50,14 @@ export const validateTime = (
 export const validateAlignment = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,
   alignment: Alignment,
-): Result.Result<ReadonlyMap<CueId, number>, ValidateAlignmentError> => {
+): Result.Result<ReadonlyMap<CueId, TimelinePosition>, ValidateAlignmentError> => {
   const cueValidation = validateCues(cues)
   if (Result.isFailure(cueValidation)) {
     return Result.fail(cueValidation.error)
   }
 
   const cueIds = new Set(cues.map((cue) => cue.id))
-  const marksByCueId = new Map<CueId, number>()
+  const marksByCueId = new Map<CueId, TimelinePosition>()
 
   for (const mark of alignment.marks) {
     if (!cueIds.has(mark.cueId)) {
@@ -70,7 +76,7 @@ export const validateAlignment = <TCue extends Cue>(
     marksByCueId.set(mark.cueId, mark.at)
   }
 
-  let previousAt: number | undefined
+  let previousAt: TimelinePosition | undefined
 
   for (const cue of cues) {
     const at = marksByCueId.get(cue.id)

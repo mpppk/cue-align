@@ -19,17 +19,27 @@ import {
   seekIndex as applySeekIndex,
   undo as applyUndo,
 } from './transitions'
-import type { Alignment, Cue, CueId, Mark } from './types'
+import type {
+  Alignment,
+  Cue,
+  CueId,
+  CueIndex,
+  Mark,
+  TimelinePosition,
+} from './types'
 
 export type AlignmentSession<TCue extends Cue> = {
   readonly cues: ReadonlyArray<TCue>
   readonly currentCue: TCue | undefined
-  readonly currentIndex: number
-  markCurrent: (at: number) => Result.Result<void, MarkCurrentError>
-  mark: (cueId: CueId, at: number) => Result.Result<void, MarkError>
+  readonly currentIndex: CueIndex
+  markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
+  mark: (
+    cueId: CueId,
+    at: TimelinePosition,
+  ) => Result.Result<void, MarkError>
   undo: () => boolean
   seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
-  seekIndex: (index: number) => Result.Result<void, SeekIndexError>
+  seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
   nextCue: () => void
   previousCue: () => void
   getMark: (cueId: CueId) => Mark | undefined

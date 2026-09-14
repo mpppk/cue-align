@@ -12,7 +12,14 @@ import type {
   SeekCueError,
   SeekIndexError,
 } from './errors'
-import type { AlignmentState, Cue, CueId } from './types'
+import { asCueIndex } from './types'
+import type {
+  AlignmentState,
+  Cue,
+  CueId,
+  CueIndex,
+  TimelinePosition,
+} from './types'
 import { validateTime } from './validation'
 
 type MarkKnownIndexError = InvalidTimeError | NonMonotonicTimeError
@@ -20,8 +27,8 @@ type MarkKnownIndexError = InvalidTimeError | NonMonotonicTimeError
 const markAtKnownIndex = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
-  index: number,
-  at: number,
+  index: CueIndex,
+  at: TimelinePosition,
   advanceCursor: boolean,
 ): Result.Result<AlignmentState, MarkKnownIndexError> => {
   const timeValidation = validateTime(at)
@@ -29,7 +36,7 @@ const markAtKnownIndex = <TCue extends Cue>(
     return Result.fail(timeValidation.error)
   }
 
-  let min: number | undefined
+  let min: TimelinePosition | undefined
   for (let previousIndex = index - 1; previousIndex >= 0; previousIndex -= 1) {
     const previousCue = cues[previousIndex]
     const previousAt = state.marksByCueId.get(previousCue.id)
@@ -39,7 +46,7 @@ const markAtKnownIndex = <TCue extends Cue>(
     }
   }
 
-  let max: number | undefined
+  let max: TimelinePosition | undefined
   for (let nextIndex = index + 1; nextIndex < cues.length; nextIndex += 1) {
     const nextCue = cues[nextIndex]
     const nextAt = state.marksByCueId.get(nextCue.id)
@@ -67,7 +74,9 @@ const markAtKnownIndex = <TCue extends Cue>(
   marksByCueId.set(cue.id, at)
 
   const nextCursorIndex =
-    advanceCursor && index + 1 < cues.length ? index + 1 : state.currentIndex
+    advanceCursor && index + 1 < cues.length
+      ? asCueIndex(index + 1)
+      : state.currentIndex
 
   return Result.succeed({
     marksByCueId,
@@ -87,7 +96,7 @@ const markAtKnownIndex = <TCue extends Cue>(
 export const markCurrent = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
-  at: number,
+  at: TimelinePosition,
 ): Result.Result<AlignmentState, MarkCurrentError> => {
   const index = state.currentIndex
   if (index < 0 || index >= cues.length) {
@@ -101,14 +110,14 @@ export const mark = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   cueId: CueId,
-  at: number,
+  at: TimelinePosition,
 ): Result.Result<AlignmentState, MarkError> => {
   const index = cues.findIndex((cue) => cue.id === cueId)
   if (index === -1) {
     return Result.fail(new UnknownCueIdError({ cueId }))
   }
 
-  return markAtKnownIndex(state, cues, index, at, false)
+  return markAtKnownIndex(state, cues, asCueIndex(index), at, false)
 }
 
 export type UndoResult = {
@@ -149,13 +158,13 @@ export const seekCue = <TCue extends Cue>(
     return Result.fail(new UnknownCueIdError({ cueId }))
   }
 
-  return Result.succeed({ ...state, currentIndex: index })
+  return Result.succeed({ ...state, currentIndex: asCueIndex(index) })
 }
 
 export const seekIndex = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
-  index: number,
+  index: CueIndex,
 ): Result.Result<AlignmentState, SeekIndexError> => {
   if (index < 0 || index >= cues.length) {
     return Result.fail(new InvalidCueIndexError({ index }))
@@ -172,7 +181,7 @@ export const nextCue = <TCue extends Cue>(
     return state
   }
 
-  return { ...state, currentIndex: state.currentIndex + 1 }
+  return { ...state, currentIndex: asCueIndex(state.currentIndex + 1) }
 }
 
 export const previousCue = (state: AlignmentState): AlignmentState => {
@@ -180,5 +189,5 @@ export const previousCue = (state: AlignmentState): AlignmentState => {
     return state
   }
 
-  return { ...state, currentIndex: state.currentIndex - 1 }
+  return { ...state, currentIndex: asCueIndex(state.currentIndex - 1) }
 }

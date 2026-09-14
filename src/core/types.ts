@@ -1,4 +1,17 @@
-export type CueId = string
+declare const cueIdBrand: unique symbol
+declare const timelinePositionBrand: unique symbol
+declare const cueIndexBrand: unique symbol
+
+export type CueId = string & { readonly [cueIdBrand]: 'CueId' }
+export type TimelinePosition = number & {
+  readonly [timelinePositionBrand]: 'TimelinePosition'
+}
+export type CueIndex = number & { readonly [cueIndexBrand]: 'CueIndex' }
+
+export const asCueId = (value: string): CueId => value as CueId
+export const asTimelinePosition = (value: number): TimelinePosition =>
+  value as TimelinePosition
+export const asCueIndex = (value: number): CueIndex => value as CueIndex
 
 export type Cue = {
   id: CueId
@@ -6,7 +19,7 @@ export type Cue = {
 
 export type Mark = {
   cueId: CueId
-  at: number
+  at: TimelinePosition
 }
 
 export type Alignment = {
@@ -17,12 +30,12 @@ export type Alignment = {
 export type MarkHistoryEntry = {
   type: 'mark'
   cueId: CueId
-  previousAt: number | undefined
-  previousCursorIndex: number
+  previousAt: TimelinePosition | undefined
+  previousCursorIndex: CueIndex
 }
 
 export type AlignmentState = {
-  marksByCueId: ReadonlyMap<CueId, number>
-  currentIndex: number
+  marksByCueId: ReadonlyMap<CueId, TimelinePosition>
+  currentIndex: CueIndex
   history: ReadonlyArray<MarkHistoryEntry>
 }
