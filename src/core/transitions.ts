@@ -6,6 +6,7 @@ import {
   UnknownCueIdError,
 } from './errors'
 import type {
+  InvalidTimeError,
   MarkCurrentError,
   MarkError,
   SeekCueError,
@@ -14,9 +15,7 @@ import type {
 import type { AlignmentState, Cue, CueId } from './types'
 import { validateTime } from './validation'
 
-type MarkKnownIndexError =
-  | import('./errors').InvalidTimeError
-  | NonMonotonicTimeError
+type MarkKnownIndexError = InvalidTimeError | NonMonotonicTimeError
 
 const markAtKnownIndex = <TCue extends Cue>(
   state: AlignmentState,
