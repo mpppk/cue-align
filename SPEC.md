@@ -1,65 +1,71 @@
-# cue-align Specification
+# cue-align 仕様書
 
-Status: Draft for v1
+ステータス: v1 Draft
 
-## 1. Overview
+## 1. 概要
 
-`cue-align` is a general-purpose tool and headless TypeScript library for aligning a pre-defined ordered sequence of cues to a media timeline by marking timestamps during playback.
+`cue-align` は、あらかじめ定義された順序付きの Cue 列を、音声・動画などのメディアのタイムラインへ手動で対応付けるための汎用ツールおよび headless TypeScript ライブラリである。
 
-The core problem is:
+解決する中心的な問題は次のとおり。
 
-> Given an ordered sequence of known cues and a clock, assign each cue a timestamp as a human listens to or watches the media.
+> 既知の順序付き Cue 列と時刻を取得できるクロックが与えられたとき、人がメディアを聴く・見る操作に合わせて各 Cue に時刻を割り当てる。
 
-A typical workflow is:
+典型的な利用フローは以下。
 
-1. Prepare an ordered list of cues.
-2. Load audio or video in an authoring UI.
-3. Start playback.
-4. Press Space whenever the current cue begins.
-5. `cue-align` records the current playback time for that cue and advances to the next cue.
-6. Export the resulting alignment.
-7. A downstream consumer interprets the alignment for rendering, subtitles, slides, animation, video generation, or another domain-specific purpose.
+1. 順序付き Cue 列を用意する。
+2. オーサリング UI で音声または動画を読み込む。
+3. メディアを再生する。
+4. 現在の Cue が始まった瞬間に Space を押す。
+5. `cue-align` がその Cue と現在の再生時刻を対応付け、次の Cue へ進む。
+6. 作成された Alignment を出力する。
+7. 下流のアプリケーションが Alignment を解釈し、動画、字幕、スライド、アニメーションなどを生成する。
 
-`cue-align` does not decide what a cue means visually or semantically. It only records the relationship between cue IDs and time.
+`cue-align` 自体は Cue が映像上・意味上で何を表すかを解釈しない。責務は **Cue ID とタイムライン上の時刻との対応付け**に限定する。
 
-## 2. Goals
+---
 
-The v1 design MUST support the following:
+## 2. v1 の目標
 
-- Align a known, ordered sequence of cues to a timeline in real time.
-- Keep the core library independent of React, the DOM, browser media elements, and any particular rendering system.
-- Allow arbitrary application-specific data to be attached to cues.
-- Treat recorded timestamps as the canonical alignment data.
-- Support fast keyboard-driven authoring.
-- Support undo and cue navigation during an authoring session.
-- Allow a partially completed alignment to be exported and resumed.
-- Make the output easy to consume from TypeScript and easy to serialize as JSON.
+v1 は以下を満たさなければならない。
 
-## 3. Non-goals for v1
+- 既知の順序付き Cue 列をタイムラインへリアルタイムにアラインできる。
+- Core ライブラリを React、DOM、ブラウザの media element、特定レンダリングシステムから独立させる。
+- Cue に任意のアプリケーション固有データを保持できる。
+- 記録された時刻を canonical な Alignment データとして扱う。
+- キーボードを中心とした高速なオーサリングを可能にする。
+- オーサリング中の undo と Cue 移動を可能にする。
+- Alignment が未完成でも保存・出力でき、後から再開できる。
+- TypeScript から扱いやすく、JSON に容易にシリアライズできる形式とする。
 
-The following are explicitly out of scope for v1:
+---
 
-- Speech recognition or automatic transcription.
-- Forced alignment from audio and text.
-- Automatic beat detection.
-- Waveform rendering or drag-based waveform editing.
-- Rendering videos, subtitles, slides, or animations.
-- Remotion-specific APIs.
-- Domain-specific concepts such as lyrics, wine classifications, presentation slides, or chapters.
-- Multiple simultaneous tracks.
-- Cue graphs, branching scripts, or unordered cue collections.
-- Recording separate canonical start and end timestamps for every cue.
-- Collaborative or multi-user editing.
+## 3. v1 の非目標
 
-These may be implemented later without changing the fundamental Cue -> Mark alignment model.
+以下は v1 の対象外とする。
 
-## 4. Terminology
+- 音声認識、自動文字起こし
+- 音声とテキストによる forced alignment
+- ビート自動検出
+- 波形描画および波形上でのドラッグ編集
+- 動画、字幕、スライド、アニメーションのレンダリング
+- Remotion 固有 API
+- 歌詞、ワイン格付け、プレゼンテーション、章などのドメイン固有概念
+- 複数タイムライン / 複数トラックの同時編集
+- Cue graph、分岐 script、順序のない Cue 集合
+- すべての Cue に対する独立した start/end 時刻の canonical 保存
+- 共同編集・複数ユーザー編集
 
-### Cue
+これらは将来的に追加可能だが、基本となる **Cue → Mark** の Alignment モデルは維持する。
 
-A `Cue` is an item that should be assigned a time.
+---
 
-A cue has a stable unique ID and an opaque application-specific payload.
+## 4. 用語とデータモデル
+
+### 4.1 Cue
+
+`Cue` はタイムライン上の時刻を割り当てたい対象を表す。
+
+各 Cue は安定した一意 ID と、アプリケーション固有の任意データを持つ。
 
 ```ts
 type CueId = string;
@@ -70,7 +76,7 @@ type Cue<T = unknown> = {
 };
 ```
 
-Examples of cue payloads include:
+例:
 
 ```ts
 { text: "Hello, world" }
@@ -84,11 +90,11 @@ Examples of cue payloads include:
 { label: "Chateau Margaux", grade: 1 }
 ```
 
-The core library MUST NOT inspect or assign semantics to `data`.
+Core ライブラリは `data` の内容を解釈してはならない。
 
-### Mark
+### 4.2 Mark
 
-A `Mark` associates a cue with a point on the timeline.
+`Mark` は Cue とタイムライン上の一点を対応付ける。
 
 ```ts
 type Mark = {
@@ -97,9 +103,9 @@ type Mark = {
 };
 ```
 
-`at` is measured in seconds from the beginning of the media or external clock.
+`at` はメディア、または外部クロックの開始時点からの秒数とする。
 
-For example:
+例:
 
 ```json
 [
@@ -109,9 +115,9 @@ For example:
 ]
 ```
 
-### Alignment
+### 4.3 Alignment
 
-An `Alignment` is the serializable result produced by an authoring session.
+`Alignment` はオーサリングセッションによって生成される、永続化可能な結果である。
 
 ```ts
 type Alignment = {
@@ -120,78 +126,88 @@ type Alignment = {
 };
 ```
 
-The cue definitions are intentionally separate from the alignment. An alignment refers to cues by stable IDs so the same cue sequence can be reused with different media or different takes.
+Cue 定義そのものは Alignment から分離する。
 
-### Session
+Alignment は安定した `cueId` のみを参照するため、同じ Cue 列を別の音源、別テイク、別動画に対して再利用できる。
 
-An `AlignmentSession` is mutable authoring state used while creating or editing an alignment.
+### 4.4 AlignmentSession
 
-It combines:
+`AlignmentSession` は Alignment を作成・編集するための mutable な作業状態である。
 
-- an ordered cue sequence;
-- zero or more existing marks;
-- a current cue cursor;
-- operation history required for undo.
+Session は以下を保持する。
 
-The session is not itself the persisted file format.
+- 順序付き Cue 列
+- 既存の Mark 群
+- 現在の Cue を示す cursor
+- undo に必要な操作履歴
 
-## 5. Core invariants
+Session 自体は永続化フォーマットではない。
 
-### 5.1 Cue IDs
+---
 
-Within one cue sequence:
+## 5. Core invariant
 
-- cue IDs MUST be unique;
-- cue IDs MUST be non-empty strings;
-- cue order is defined only by the order of the input array.
+### 5.1 Cue ID
 
-### 5.2 Time values
+1つの Cue 列において以下を満たすこと。
 
-A mark timestamp MUST be:
+- Cue ID は一意でなければならない。
+- Cue ID は空文字列であってはならない。
+- Cue の順序は入力配列の順序のみで定義する。
 
-- finite;
-- greater than or equal to `0`;
-- expressed in seconds.
+### 5.2 時刻
 
-The library MUST NOT round timestamps. Precision is determined by the clock supplied by the caller.
+Mark の `at` は以下を満たさなければならない。
 
-### 5.3 One mark per cue
+- finite number である。
+- `0` 以上である。
+- 単位は秒である。
 
-v1 permits at most one canonical mark per cue.
+Core は時刻を丸めてはならない。精度は呼び出し側から渡されるクロックに依存する。
 
-Re-marking a cue is therefore an update to its existing mark, not the creation of another mark.
+### 5.3 1 Cue につき 1 Mark
 
-### 5.4 Ordered alignment
+v1 では各 Cue に対して canonical な Mark は最大1つとする。
 
-v1 is designed for ordered cues. For marked cues, timestamps MUST preserve cue order.
+すでに Mark 済みの Cue を再度 mark した場合、新しい Mark を追加するのではなく既存 Mark の更新として扱う。
 
-Given cues `[A, B, C]`, a valid complete alignment satisfies:
+### 5.4 順序制約
+
+v1 は順序付き Cue を対象とする。
+
+Mark 済み Cue の時刻は Cue の順序と矛盾してはならない。
+
+Cue が `[A, B, C]` の場合、有効な Alignment は次を満たす。
 
 ```text
 A.at <= B.at <= C.at
 ```
 
-Equal timestamps MAY be accepted because two logical cues can intentionally begin at the same instant.
+同じ瞬間に複数の論理 Cue が開始するケースを許容するため、同一時刻は許可する。
 
-An operation that would make the alignment non-monotonic MUST fail without mutating the session.
+順序制約を破る操作は、Session の状態を変更せず失敗しなければならない。
 
-### 5.5 Partial alignments
+### 5.5 部分 Alignment
 
-An alignment MAY be incomplete. This is required for save/resume workflows.
+Alignment は未完成でもよい。
 
-A session therefore MUST NOT require every cue to have a mark before export.
+すべての Cue に Mark が付いていなくても export 可能でなければならない。
 
-## 6. Canonical data model
+これにより保存・再開フローを実現する。
 
-The canonical timing information is the cue start mark:
+---
+
+## 6. Canonical timing data
+
+v1 における canonical なタイミング情報は Cue の開始点を表す Mark のみとする。
 
 ```ts
 { cueId, at }
 ```
 
-The canonical format MUST NOT store a derived `end` value for each cue in v1.
+`end` は canonical データとして保存しない。
 
-Consumers may derive intervals when their semantics allow it:
+必要な consumer は次のように区間へ変換できる。
 
 ```ts
 const intervals = marks.map((mark, index) => ({
@@ -201,13 +217,25 @@ const intervals = marks.map((mark, index) => ({
 }));
 ```
 
-However, `cue-align` MUST NOT assume that the next cue starting means the previous cue remains active until that point. A consumer may need to represent silence, an interlude, or another state between cues.
+ただし `cue-align` は「次の Cue が始まるまで前の Cue が active である」と仮定してはならない。
 
-This separation avoids encoding rendering semantics into the alignment format.
+例えば以下のようなケースがある。
 
-## 7. Headless core API
+```text
+Cue A ──────       Cue B ──────
+            ↑
+         無音・間奏
+```
 
-The exact implementation names may evolve, but v1 SHOULD expose an API equivalent to the following.
+Cue A の意味上の終了時刻と Cue B の開始時刻が一致するとは限らない。
+
+そのため表示状態や区間の意味は consumer 側の責務とする。
+
+---
+
+## 7. Headless Core API
+
+具体的な命名は実装時に調整可能だが、v1 は概ね以下と同等の API を提供する。
 
 ```ts
 type CreateAlignmentSessionOptions<T> = {
@@ -243,84 +271,84 @@ function createAlignmentSession<T>(
 
 ### 7.1 `markCurrent(at)`
 
-`markCurrent(at)` MUST:
+`markCurrent(at)` は以下を行う。
 
-1. validate the timestamp;
-2. associate the current cue with `at`;
-3. reject the operation if it would violate ordering invariants;
-4. record enough history for `undo()`;
-5. advance the cursor to the next cue when one exists.
+1. timestamp を検証する。
+2. current Cue と `at` を対応付ける。
+3. 順序制約に違反する場合は失敗する。
+4. `undo()` に必要な履歴を記録する。
+5. 次の Cue が存在すれば cursor を次へ進める。
 
-If the current cue already has a mark, the operation updates that mark subject to the same ordering constraints.
+current Cue がすでに Mark 済みの場合は、同じ制約のもと既存 Mark を更新する。
 
 ### 7.2 `mark(cueId, at)`
 
-`mark` is the non-UI primitive for assigning or updating a cue timestamp.
+任意 Cue に timestamp を割り当てる headless primitive とする。
 
-It MUST NOT implicitly change the current cue unless the implementation documents such behavior. The recommended v1 behavior is to leave the cursor unchanged.
+`mark` 自体は current cursor を暗黙に移動しないことを推奨する。
 
 ### 7.3 `undo()`
 
-`undo()` reverts the most recent successful mark mutation performed in the current session.
+現在 Session 内で直近に成功した Mark の変更を元に戻す。
 
-For the normal real-time workflow:
+通常フローで、
 
 ```text
 mark A -> mark B -> undo
 ```
 
-results in B returning to its previous state and the current cursor returning to B.
+とした場合、B の Mark は変更前の状態へ戻り、current cursor も B へ戻る。
 
-It returns `false` when there is nothing to undo.
+undo 対象がない場合は `false` を返す。
 
-Cursor-only navigation does not need to be part of the undo history in v1.
+v1 では cursor 移動のみの操作は undo 履歴へ含めなくてよい。
 
 ### 7.4 Cue navigation
 
-`seekCue`, `seekIndex`, `nextCue`, and `previousCue` change only the current cursor. They MUST NOT modify alignment data.
+`seekCue`、`seekIndex`、`nextCue`、`previousCue` は cursor のみを変更する。
 
-This allows an author to inspect earlier or later cues without changing timestamps.
+Alignment データを変更してはならない。
 
-## 8. Clock and media independence
+---
 
-The core package MUST NOT own or control media playback.
+## 8. クロック・メディアからの独立
 
-The caller supplies the current time explicitly:
+Core package はメディア再生を所有・制御してはならない。
+
+現在時刻は呼び出し側から明示的に渡す。
 
 ```ts
 session.markCurrent(audio.currentTime);
 ```
 
-This boundary allows the same core library to work with:
+この境界により同じ Core を以下と組み合わせられる。
 
-- `HTMLAudioElement`;
-- `HTMLVideoElement`;
-- Web Audio API clocks;
-- custom media players;
-- YouTube or other embedded players;
-- Remotion Player;
-- MIDI or external timecode;
-- tests using a deterministic fake clock.
+- `HTMLAudioElement`
+- `HTMLVideoElement`
+- Web Audio API の clock
+- 独自 media player
+- YouTube 等の embedded player
+- Remotion Player
+- MIDI / 外部 timecode
+- deterministic fake clock を用いたテスト
 
-A future adapter package MAY provide clock integrations, but media control is not part of the headless core contract.
+将来的に adapter package が特定 player との統合を提供してもよいが、media control は headless core の責務に含めない。
+
+---
 
 ## 9. Reference authoring tool
 
-The repository SHOULD include a small reference browser application built on the headless core.
+リポジトリには headless core を利用する小さなブラウザ向け reference app を含めることを推奨する。
 
-The v1 authoring flow is intentionally simple.
+### 9.1 入力
 
-### Inputs
+Reference app は以下を入力として扱う。
 
-The tool accepts:
+1. 順序付き Cue 定義
+2. 音声または動画
+3. 任意で既存 Alignment
 
-1. an ordered cue definition;
-2. an audio or video source;
-3. optionally, an existing alignment to resume or edit.
-
-The initial generic interchange format for cues SHOULD be JSON.
-
-Example:
+Cue の初期 interchange format は JSON とする。
 
 ```json
 [
@@ -330,20 +358,22 @@ Example:
 ]
 ```
 
-The media file may be loaded locally in the browser. Uploading media to a server is not required for v1.
+メディアはブラウザ上でローカルファイルとして読み込めればよい。
 
-### Primary UI
+v1 ではサーバーへの upload を必須としない。
 
-The tool SHOULD prominently show:
+### 9.2 主画面
 
-- current playback position;
-- previous cue;
-- current cue;
-- next cue;
-- progress through the cue sequence;
-- whether the current cue already has a mark.
+最低限、次の情報を表示する。
 
-A minimal representation is:
+- 現在の再生時刻
+- 前の Cue
+- 現在の Cue
+- 次の Cue
+- Cue 全体に対する進捗
+- current Cue がすでに Mark 済みかどうか
+
+例:
 
 ```text
 00:42.381
@@ -360,28 +390,32 @@ C
 [ Space: Mark current cue ]
 ```
 
-The UI may display cue `data` using a configurable formatter. The core library does not define how arbitrary cue data is rendered.
+Cue の `data` は設定可能な formatter により表示してよい。
 
-## 10. Default keyboard workflow
+Core は任意の `data` をどのように描画するかを定義しない。
 
-The reference authoring tool SHOULD provide the following default bindings:
+---
+
+## 10. デフォルトのキーボード操作
+
+Reference app は以下の shortcut を提供する。
 
 | Key | Action |
 | --- | --- |
-| `Space` | Mark the current cue at the current playback time and advance |
-| `Backspace` | Undo the most recent mark mutation |
-| `ArrowLeft` | Move the cue cursor to the previous cue |
-| `ArrowRight` | Move the cue cursor to the next cue |
+| `Space` | current Cue を現在の再生時刻で mark し、次の Cue へ進む |
+| `Backspace` | 直近の Mark 変更を undo |
+| `ArrowLeft` | 前の Cue へ移動 |
+| `ArrowRight` | 次の Cue へ移動 |
 
-Keyboard handlers belong to the authoring UI, not the core package.
+Keyboard handling は Core ではなく UI の責務とする。
 
-The tool MUST prevent browser defaults such as page scrolling when a shortcut is handled and focus is not inside an editable control.
+入力フィールド等に focus がない状態で shortcut を処理した場合、Space による page scroll 等の browser default behavior は抑止する。
 
-## 11. Save, resume, and export
+---
 
-The authoring tool SHOULD allow the current `Alignment` to be exported as JSON at any time, including when incomplete.
+## 11. 保存・再開・Export
 
-Example:
+Reference app は未完成の Alignment を含め、いつでも JSON export できるようにする。
 
 ```json
 {
@@ -393,34 +427,38 @@ Example:
 }
 ```
 
-When an existing alignment is loaded, the core MUST validate that:
+既存 Alignment を読み込む際は最低限以下を検証する。
 
-- the format version is supported;
-- every referenced cue ID exists in the supplied cue sequence;
-- no cue appears more than once;
-- all timestamps are valid;
-- marked cues preserve cue order.
+- format version がサポート対象である。
+- 参照される Cue ID が Cue 列に存在する。
+- 同じ Cue が複数回出現していない。
+- timestamp が有効である。
+- Mark 済み Cue の時刻が Cue 順序と矛盾しない。
 
-Invalid input MUST produce an explicit validation error rather than silently dropping or rewriting data.
+不正データを黙って削除・修正してはならず、明示的な validation error とする。
+
+---
 
 ## 12. Error model
 
-Expected user/data errors SHOULD be represented explicitly rather than relying on uncaught exceptions in the UI.
+入力・ユーザー操作によって通常発生し得るエラーは、UI 上の uncaught exception に依存せずプログラムから識別可能にする。
 
-Examples include:
+例:
 
-- duplicate cue ID;
-- unknown cue ID in an imported alignment;
-- invalid timestamp;
-- non-monotonic timestamp assignment;
-- unsupported alignment version;
-- invalid cue index.
+- duplicate cue ID
+- import された Alignment 内の unknown cue ID
+- invalid timestamp
+- non-monotonic timestamp assignment
+- unsupported alignment version
+- invalid cue index
 
-The exact TypeScript error representation is an implementation decision for v1, but error cases MUST be distinguishable programmatically.
+具体的な TypeScript 上の error representation は v1 実装時に決定するが、各エラー種別は programmatically distinguishable でなければならない。
 
-## 13. Suggested repository architecture
+---
 
-A reasonable initial structure is:
+## 13. 推奨リポジトリ構成
+
+初期構成案:
 
 ```text
 cue-align/
@@ -433,7 +471,7 @@ cue-align/
   SPEC.md
 ```
 
-Possible later packages include:
+将来的には以下の package を追加できる。
 
 ```text
 packages/
@@ -442,37 +480,43 @@ packages/
   remotion/
 ```
 
-These are not required for the first implementation.
+これらは最初の実装では必須ではない。
 
-## 14. Example use cases
+---
 
-The same core model should support all of the following without domain-specific changes.
+## 14. ユースケース例
 
-### Lyrics or memorization video
+Core のデータモデルを変更せず、以下のような用途を扱えることを目標とする。
 
-Each cue represents a lyric fragment, vocabulary item, or named item. A downstream video renderer highlights the active item according to the marks.
+### 14.1 歌詞・暗記動画
 
-### Slide synchronization
+Cue が歌詞断片、単語、固有名詞などを表す。
 
-Each cue identifies a slide. Marks record when each slide should become active.
+下流の動画レンダラーが Mark に応じて現在の項目をハイライトする。
 
-### Subtitle preparation
+ボルドー・メドック格付け銘柄の暗記動画はこの一例であり、Core にワイン固有の概念は導入しない。
 
-Each cue contains known transcript text. Marks provide manually authored start timestamps for later subtitle conversion.
+### 14.2 スライド同期
 
-### Product demo or screencast
+各 Cue が slide を識別し、その slide が有効になる時刻を Mark として記録する。
 
-Each cue describes a step in a scripted demonstration. Marks align those steps to a recorded video.
+### 14.3 字幕作成
 
-### Chapter or annotation timing
+各 Cue に既知の transcript text を保持し、手動で開始時刻を割り当てる。
 
-Each cue represents a chapter, annotation, or metadata event to be attached to a media timeline.
+### 14.4 Product demo / screencast
 
-## 15. Example: rendering integration
+各 Cue が scripted demo のステップを表し、録画された動画上の時刻へ対応付ける。
 
-Rendering is intentionally downstream of `cue-align`.
+### 14.5 Chapter / annotation
 
-Given:
+Cue が chapter、annotation、metadata event を表し、メディアタイムラインへ配置する。
+
+---
+
+## 15. Rendering integration の例
+
+Rendering は意図的に `cue-align` の下流へ分離する。
 
 ```ts
 const cues = [
@@ -489,67 +533,112 @@ const alignment = {
 };
 ```
 
-A renderer may determine the active cue for a given time and render anything it wants. For example, a video application might highlight `Alpha` from its mark until its own application-specific transition rule says otherwise.
+Renderer は任意時刻に active な Cue を独自ルールで決定し、任意の UI や映像を描画できる。
 
-That transition rule does not belong in `cue-align`.
+例えば動画アプリケーションは `Alpha` の Mark から独自の transition rule で終了と判断するまで `Alpha` をハイライトできる。
 
-## 16. Future extensions
+その transition rule は `cue-align` の責務ではない。
 
-The following extensions are compatible with the v1 model and may be explored later.
+---
 
-### Waveform editing
+## 16. 将来拡張
 
-After a fast real-time marking pass, display marks over an audio waveform and allow millisecond-level drag adjustment.
+### 16.1 波形編集
 
-The waveform implementation should consume and update the same `Mark` data rather than introducing a second timing format.
+リアルタイム打刻を一度完了した後、音声波形上へ Mark を表示し、ミリ秒単位でドラッグ調整できるようにする。
 
-### Arbitrary cue selection
+波形 editor は新しい timing format を導入せず、同じ `Mark` データを編集する。
 
-Provide an authoring mode where users select a cue before marking instead of always advancing sequentially.
+### 16.2 任意 Cue 選択
 
-### Automatic alignment assistance
+常に順番に進むモードに加え、ユーザーが任意 Cue を選択して mark できるモードを追加できる。
 
-ASR, forced alignment, beat detection, or other systems may propose initial marks. The human authoring tool can then correct those marks.
+### 16.3 自動 Alignment 支援
 
-Automatic systems should therefore produce the same `Alignment` format as manual authoring.
+ASR、forced alignment、beat detection、その他の自動処理が初期 Mark を提案し、人間が修正するワークフローを追加できる。
 
-### Framework integrations
+自動生成された結果も手動編集と同じ `Alignment` format を出力する。
 
-Adapters may be provided for React, Remotion, media players, or other ecosystems while keeping `@cue-align/core` framework-independent.
+### 16.4 Framework integration
 
-### Explicit ranges
+Core を framework-independent に保ったまま、React、Remotion、各種 media player 向け adapter を提供できる。
 
-Some future use cases may require independently authored cue end times. If introduced, ranges should be an additive concept rather than changing the meaning of v1 start marks.
+### 16.5 Explicit range
 
-### Multiple tracks
+将来、独立した Cue 終了時刻が必要なユースケースに対応してもよい。
 
-Future versions may support multiple independent cue sequences aligned against the same clock, such as lyrics plus scene changes. This is deliberately not part of the v1 session model.
+その場合も v1 の start Mark の意味を変更せず、range は additive な概念として追加する。
 
-## 17. Design principles
+### 16.6 Multiple tracks
 
-Implementation decisions should preserve the following principles:
+歌詞と scene change のように、同じ clock に対して複数の独立 Cue 列をアラインする機能を将来的に追加できる。
 
-1. **Alignment, not rendering.** The library records when known cues occur; consumers decide what those cues mean.
-2. **Headless core.** Core logic has no dependency on React, DOM events, or a specific media player.
-3. **Stable IDs over positional coupling.** Marks reference cue IDs, while the cue array defines intended order.
-4. **Minimal canonical data.** Store observed timestamps; derive presentation-specific intervals and states elsewhere.
-5. **Fast human input first.** A complete real-time pass should require little more than listening and pressing one key per cue.
-6. **Correction is expected.** Undo, navigation, resume, and later precision editing are first-class parts of the model.
-7. **Automation is additive.** Future machine-generated marks should use the same format as human-generated marks.
+これは v1 の Session model には含めない。
 
-## 18. v1 acceptance criteria
+---
 
-The first usable version is complete when all of the following are possible:
+## 17. 設計原則
 
-1. Create a session from an ordered array of generic cues.
-2. Load audio or video in the reference browser tool.
-3. Play the media and press Space once per cue.
-4. Record each cue against the media's current time.
-5. Undo an accidental mark.
-6. Navigate backward and forward through cues without changing timing data.
-7. Reject invalid or non-monotonic timing assignments.
-8. Export a partial or complete versioned alignment as JSON.
-9. Reload the cue list plus exported alignment and continue editing.
-10. Use the exported alignment from application code without depending on the authoring UI.
+実装判断では以下を維持する。
 
-This is the v1 contract. Features beyond these criteria should not be allowed to complicate the core data model before the basic workflow is implemented and validated.
+1. **Alignment, not rendering**  
+   ライブラリは既知の Cue がいつ発生するかを記録する。Cue が何を意味するかは consumer が決める。
+
+2. **Headless core**  
+   Core は React、DOM event、特定 media player に依存しない。
+
+3. **Stable ID over positional coupling**  
+   Mark は Cue ID を参照し、Cue 配列は意図した順序を定義する。
+
+4. **Minimal canonical data**  
+   観測された timestamp のみを保存し、表示固有の区間や状態は下流で導出する。
+
+5. **Fast human input first**  
+   リアルタイム同期の1パスは、基本的にメディアを再生し Cue ごとに1キー押すだけで完了できるようにする。
+
+6. **Correction is expected**  
+   Undo、navigation、save/resume、将来の精密編集を通常フローとして扱う。
+
+7. **Automation is additive**  
+   将来的な自動 Alignment も人間が生成するものと同じ Alignment format を使用する。
+
+---
+
+## 18. v1 Acceptance Criteria
+
+最初の利用可能バージョンは、以下をすべて満たした時点で完成とする。
+
+1. 任意 `data` を持つ順序付き Cue 配列から Session を作成できる。
+2. Reference browser app で音声または動画を読み込める。
+3. メディアを再生し、Cue ごとに Space を押して同期できる。
+4. Space を押した瞬間のメディア時刻を Cue の Mark として記録できる。
+5. 誤った打刻を undo できる。
+6. Cue cursor を前後へ移動できる。
+7. 既存 Cue の Mark を修正できる。
+8. 未完成状態を含む Alignment を JSON として export できる。
+9. Export 済み Alignment を再度読み込み、作業を継続できる。
+10. 不正な Cue / Alignment を明示的な validation error として拒否できる。
+11. Core package が DOM、React、特定 media player、Remotion に依存しない。
+12. 同じ Alignment を downstream renderer から Cue ID と時刻の対応として利用できる。
+
+---
+
+## 19. 初期実装で優先する最小フロー
+
+最初の実装では、機能を以下まで絞る。
+
+```text
+Cue JSON
+   +
+Audio / Video
+   ↓
+Reference Authoring UI
+   ↓
+Play
+   ↓
+Space = markCurrent(media.currentTime)
+   ↓
+Alignment JSON
+```
+
+この最小フローを安定させた後に、波形編集、自動 Alignment、Remotion adapter などを追加する。
