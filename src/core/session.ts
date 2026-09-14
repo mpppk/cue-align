@@ -1,12 +1,8 @@
 import { Result } from '@praha/byethrow'
 
 import type { AlignmentError } from './errors'
-import {
-  getAlignment,
-  getCurrentCue,
-  getMark,
-  isComplete,
-} from './selectors'
+import { getAlignment, getCurrentCue, getMark, isComplete } from './selectors'
+import { createAlignmentState, type CreateAlignmentStateOptions } from './state'
 import {
   mark as applyMark,
   markCurrent as applyMarkCurrent,
@@ -17,10 +13,6 @@ import {
   undo as applyUndo,
 } from './transitions'
 import type { Alignment, Cue, CueId, Mark } from './types'
-import {
-  createAlignmentState,
-  type CreateAlignmentStateOptions,
-} from './state'
 
 export type AlignmentSession<TCue extends Cue> = {
   readonly cues: ReadonlyArray<TCue>
