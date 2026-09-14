@@ -1,7 +1,7 @@
 import { Result } from '@praha/byethrow'
 
 import { UnknownCueIdError } from './errors'
-import type { AlignmentError } from './errors'
+import type { CreateAlignmentStateError } from './errors'
 import type { Alignment, AlignmentState, Cue, CueId } from './types'
 import { validateAlignment, validateCues } from './validation'
 
@@ -13,7 +13,7 @@ export type CreateAlignmentStateOptions<TCue extends Cue> = {
 
 export const createAlignmentState = <TCue extends Cue>(
   options: CreateAlignmentStateOptions<TCue>,
-): Result.Result<AlignmentState, AlignmentError> => {
+): Result.Result<AlignmentState, CreateAlignmentStateError> => {
   const { cues, alignment, initialCueId } = options
 
   let marksByCueId: ReadonlyMap<CueId, number>
