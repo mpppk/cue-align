@@ -1,6 +1,7 @@
 import { Result } from '@praha/byethrow'
 
-import { UnknownCueIdError, type AlignmentError } from './errors'
+import { UnknownCueIdError } from './errors'
+import type { AlignmentError } from './errors'
 import type { Alignment, AlignmentState, Cue, CueId } from './types'
 import { validateAlignment, validateCues } from './validation'
 
