@@ -2,7 +2,8 @@ import { Result } from '@praha/byethrow'
 
 import type { AlignmentError } from './errors'
 import { getAlignment, getCurrentCue, getMark, isComplete } from './selectors'
-import { createAlignmentState, type CreateAlignmentStateOptions } from './state'
+import { createAlignmentState } from './state'
+import type { CreateAlignmentStateOptions } from './state'
 import {
   mark as applyMark,
   markCurrent as applyMarkCurrent,
