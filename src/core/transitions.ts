@@ -5,21 +5,26 @@ import {
   NonMonotonicTimeError,
   UnknownCueIdError,
 } from './errors'
-import type { AlignmentError } from './errors'
+import type {
+  MarkCurrentError,
+  MarkError,
+  SeekCueError,
+  SeekIndexError,
+} from './errors'
 import type { AlignmentState, Cue, CueId } from './types'
 import { validateTime } from './validation'
 
-const markAtIndex = <TCue extends Cue>(
+type MarkKnownIndexError =
+  | import('./errors').InvalidTimeError
+  | NonMonotonicTimeError
+
+const markAtKnownIndex = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   index: number,
   at: number,
   advanceCursor: boolean,
-): Result.Result<AlignmentState, AlignmentError> => {
-  if (index < 0 || index >= cues.length) {
-    return Result.fail(new InvalidCueIndexError({ index }))
-  }
-
+): Result.Result<AlignmentState, MarkKnownIndexError> => {
   const timeValidation = validateTime(at)
   if (Result.isFailure(timeValidation)) {
     return Result.fail(timeValidation.error)
@@ -84,21 +89,27 @@ export const markCurrent = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   at: number,
-): Result.Result<AlignmentState, AlignmentError> =>
-  markAtIndex(state, cues, state.currentIndex, at, true)
+): Result.Result<AlignmentState, MarkCurrentError> => {
+  const index = state.currentIndex
+  if (index < 0 || index >= cues.length) {
+    return Result.fail(new InvalidCueIndexError({ index }))
+  }
+
+  return markAtKnownIndex(state, cues, index, at, true)
+}
 
 export const mark = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   cueId: CueId,
   at: number,
-): Result.Result<AlignmentState, AlignmentError> => {
+): Result.Result<AlignmentState, MarkError> => {
   const index = cues.findIndex((cue) => cue.id === cueId)
   if (index === -1) {
     return Result.fail(new UnknownCueIdError({ cueId }))
   }
 
-  return markAtIndex(state, cues, index, at, false)
+  return markAtKnownIndex(state, cues, index, at, false)
 }
 
 export type UndoResult = {
@@ -133,7 +144,7 @@ export const seekCue = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   cueId: CueId,
-): Result.Result<AlignmentState, AlignmentError> => {
+): Result.Result<AlignmentState, SeekCueError> => {
   const index = cues.findIndex((cue) => cue.id === cueId)
   if (index === -1) {
     return Result.fail(new UnknownCueIdError({ cueId }))
@@ -146,7 +157,7 @@ export const seekIndex = <TCue extends Cue>(
   state: AlignmentState,
   cues: ReadonlyArray<TCue>,
   index: number,
-): Result.Result<AlignmentState, AlignmentError> => {
+): Result.Result<AlignmentState, SeekIndexError> => {
   if (index < 0 || index >= cues.length) {
     return Result.fail(new InvalidCueIndexError({ index }))
   }
