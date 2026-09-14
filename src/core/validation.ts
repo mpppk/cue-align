@@ -45,7 +45,10 @@ export const validateTime = (
 export const validateAlignment = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,
   alignment: Alignment,
-): Result.Result<ReadonlyMap<CueId, TimelinePosition>, ValidateAlignmentError> => {
+): Result.Result<
+  ReadonlyMap<CueId, TimelinePosition>,
+  ValidateAlignmentError
+> => {
   const cueValidation = validateCues(cues)
   if (Result.isFailure(cueValidation)) {
     return Result.fail(cueValidation.error)
