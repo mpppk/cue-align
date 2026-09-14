@@ -55,6 +55,32 @@ export class InvalidCueIndexError extends ErrorFactory({
   fields: ErrorFactory.fields<{ index: number }>(),
 }) {}
 
+export type ValidateCuesError = EmptyCueIdError | DuplicateCueIdError
+
+export type ValidateAlignmentError =
+  | ValidateCuesError
+  | UnknownCueIdError
+  | DuplicateMarkError
+  | InvalidTimeError
+  | NonMonotonicTimeError
+
+export type CreateAlignmentStateError = ValidateAlignmentError
+export type CreateAlignmentSessionError = CreateAlignmentStateError
+
+export type MarkCurrentError =
+  | InvalidCueIndexError
+  | InvalidTimeError
+  | NonMonotonicTimeError
+
+export type MarkError =
+  | UnknownCueIdError
+  | InvalidTimeError
+  | NonMonotonicTimeError
+
+export type SeekCueError = UnknownCueIdError
+export type SeekIndexError = InvalidCueIndexError
+
+/** All domain errors, useful as an umbrella type but intentionally not used by Result APIs. */
 export type AlignmentError =
   | EmptyCueIdError
   | DuplicateCueIdError
