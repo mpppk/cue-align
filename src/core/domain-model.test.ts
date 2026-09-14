@@ -19,6 +19,7 @@ import type {
   SeekCueError,
   SeekIndexError,
 } from './index'
+import type { AlignmentState } from './types'
 
 type TestCue = Cue & {
   label: string
@@ -31,10 +32,7 @@ const cues: ReadonlyArray<TestCue> = [
 ]
 
 const unwrapSession = (
-  result: Result.Result<
-    AlignmentSession<TestCue>,
-    CreateAlignmentSessionError
-  >,
+  result: Result.Result<AlignmentSession<TestCue>, CreateAlignmentSessionError>,
 ): AlignmentSession<TestCue> => {
   if (Result.isFailure(result)) {
     throw result.error
@@ -46,7 +44,7 @@ const unwrapSession = (
 describe('alignment domain model', () => {
   it('exposes precise Result error unions', () => {
     expectTypeOf(createAlignmentState({ cues })).toEqualTypeOf<
-      Result.Result<import('./types').AlignmentState, CreateAlignmentStateError>
+      Result.Result<AlignmentState, CreateAlignmentStateError>
     >()
 
     expectTypeOf(createAlignmentSession({ cues })).toEqualTypeOf<
