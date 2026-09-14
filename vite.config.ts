@@ -212,7 +212,7 @@ const config = defineConfig({
               prefer: 'type-imports',
             },
           ],
-          'typescript/method-signature-style': ['error', 'method'],
+          'typescript/method-signature-style': ['error', 'property'],
           'typescript/no-duplicate-enum-values': 'error',
           'typescript/no-extra-non-null-assertion': 'error',
           'typescript/no-for-in-array': 'error',
