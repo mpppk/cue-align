@@ -1,12 +1,13 @@
 import { Result } from '@praha/byethrow'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 import {
   DuplicateCueIdError,
   InvalidCueIndexError,
   NonMonotonicTimeError,
 } from './errors'
-import { createAlignmentSession, type AlignmentSession } from './session'
+import { createAlignmentSession } from './session'
+import type { AlignmentSession } from './session'
 import { createAlignmentState } from './state'
 import { markCurrent } from './transitions'
 import type { AlignmentError, Cue } from './index'
