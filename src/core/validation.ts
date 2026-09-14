@@ -10,12 +10,7 @@ import {
 } from './errors'
 import type { ValidateAlignmentError, ValidateCuesError } from './errors'
 import { asCueIndex } from './types'
-import type {
-  Alignment,
-  Cue,
-  CueId,
-  TimelinePosition,
-} from './types'
+import type { Alignment, Cue, CueId, TimelinePosition } from './types'
 
 export const validateCues = <TCue extends Cue>(
   cues: ReadonlyArray<TCue>,

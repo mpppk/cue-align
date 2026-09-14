@@ -33,10 +33,7 @@ export type AlignmentSession<TCue extends Cue> = {
   readonly currentCue: TCue | undefined
   readonly currentIndex: CueIndex
   markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
-  mark: (
-    cueId: CueId,
-    at: TimelinePosition,
-  ) => Result.Result<void, MarkError>
+  mark: (cueId: CueId, at: TimelinePosition) => Result.Result<void, MarkError>
   undo: () => boolean
   seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
   seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>

@@ -10,11 +10,7 @@ import { createAlignmentSession } from './session'
 import type { AlignmentSession } from './session'
 import { createAlignmentState } from './state'
 import { markCurrent } from './transitions'
-import {
-  asCueId,
-  asCueIndex,
-  asTimelinePosition,
-} from './types'
+import { asCueId, asCueIndex, asTimelinePosition } from './types'
 import type {
   CreateAlignmentSessionError,
   CreateAlignmentStateError,
@@ -34,6 +30,11 @@ type TestCue = Cue & {
 }
 
 type IsAssignable<From, To> = [From] extends [To] ? true : false
+type StringToCueId = IsAssignable<string, CueId>
+type NumberToTimelinePosition = IsAssignable<number, TimelinePosition>
+type NumberToCueIndex = IsAssignable<number, CueIndex>
+type TimelinePositionToCueIndex = IsAssignable<TimelinePosition, CueIndex>
+type CueIndexToTimelinePosition = IsAssignable<CueIndex, TimelinePosition>
 
 const ids = {
   a: asCueId('a'),
@@ -62,11 +63,11 @@ const unwrapSession = (
 
 describe('alignment domain model', () => {
   it('brands domain primitives to prevent accidental interchange', () => {
-    expectTypeOf<IsAssignable<string, CueId>>().toEqualTypeOf<false>()
-    expectTypeOf<IsAssignable<number, TimelinePosition>>().toEqualTypeOf<false>()
-    expectTypeOf<IsAssignable<number, CueIndex>>().toEqualTypeOf<false>()
-    expectTypeOf<IsAssignable<TimelinePosition, CueIndex>>().toEqualTypeOf<false>()
-    expectTypeOf<IsAssignable<CueIndex, TimelinePosition>>().toEqualTypeOf<false>()
+    expectTypeOf<StringToCueId>().toEqualTypeOf<false>()
+    expectTypeOf<NumberToTimelinePosition>().toEqualTypeOf<false>()
+    expectTypeOf<NumberToCueIndex>().toEqualTypeOf<false>()
+    expectTypeOf<TimelinePositionToCueIndex>().toEqualTypeOf<false>()
+    expectTypeOf<CueIndexToTimelinePosition>().toEqualTypeOf<false>()
   })
 
   it('exposes precise Result error unions', () => {
