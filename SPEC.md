@@ -68,27 +68,27 @@ v1 は以下を満たさなければならない。
 Core が Cue に要求するのは、安定した一意 ID のみである。
 
 ```ts
-type CueId = string;
+type CueId = string
 
 type Cue = {
-  id: CueId;
-};
+  id: CueId
+}
 ```
 
 アプリケーションは `Cue` を満たす任意の型を使用できる。
 
 ```ts
 type LyricCue = Cue & {
-  text: string;
-  speaker?: string;
-};
+  text: string
+  speaker?: string
+}
 ```
 
 ```ts
 type SlideCue = Cue & {
-  slideId: string;
-  title: string;
-};
+  slideId: string
+  title: string
+}
 ```
 
 例えば実際の Cue は次のように表現できる。
@@ -119,9 +119,9 @@ Core は `id` 以外のプロパティを解釈してはならない。ただし
 
 ```ts
 type Mark = {
-  cueId: CueId;
-  at: number;
-};
+  cueId: CueId
+  at: number
+}
 ```
 
 `at` はメディア、または外部クロックの開始時点からの秒数とする。
@@ -142,9 +142,9 @@ type Mark = {
 
 ```ts
 type Alignment = {
-  version: 1;
-  marks: Mark[];
-};
+  version: 1
+  marks: Mark[]
+}
 ```
 
 Cue 定義そのものは Alignment から分離する。
@@ -223,7 +223,9 @@ Alignment は未完成でもよい。
 v1 における canonical なタイミング情報は Cue の開始点を表す Mark のみとする。
 
 ```ts
-{ cueId, at }
+{
+  ;(cueId, at)
+}
 ```
 
 `end` は canonical データとして保存しない。
@@ -235,7 +237,7 @@ const intervals = marks.map((mark, index) => ({
   cueId: mark.cueId,
   start: mark.at,
   end: marks[index + 1]?.at,
-}));
+}))
 ```
 
 ただし `cue-align` は「次の Cue が始まるまで前の Cue が active である」と仮定してはならない。
@@ -260,34 +262,34 @@ Cue A の意味上の終了時刻と Cue B の開始時刻が一致するとは�
 
 ```ts
 type CreateAlignmentSessionOptions<TCue extends Cue> = {
-  cues: readonly TCue[];
-  alignment?: Alignment;
-  initialCueId?: CueId;
-};
+  cues: readonly TCue[]
+  alignment?: Alignment
+  initialCueId?: CueId
+}
 
 interface AlignmentSession<TCue extends Cue> {
-  readonly cues: readonly TCue[];
-  readonly currentCue: TCue | undefined;
-  readonly currentIndex: number;
+  readonly cues: readonly TCue[]
+  readonly currentCue: TCue | undefined
+  readonly currentIndex: number
 
-  markCurrent(at: number): void;
-  mark(cueId: CueId, at: number): void;
+  markCurrent(at: number): void
+  mark(cueId: CueId, at: number): void
 
-  undo(): boolean;
+  undo(): boolean
 
-  seekCue(cueId: CueId): void;
-  seekIndex(index: number): void;
-  nextCue(): void;
-  previousCue(): void;
+  seekCue(cueId: CueId): void
+  seekIndex(index: number): void
+  nextCue(): void
+  previousCue(): void
 
-  getMark(cueId: CueId): Mark | undefined;
-  getAlignment(): Alignment;
-  isComplete(): boolean;
+  getMark(cueId: CueId): Mark | undefined
+  getAlignment(): Alignment
+  isComplete(): boolean
 }
 
 function createAlignmentSession<TCue extends Cue>(
   options: CreateAlignmentSessionOptions<TCue>,
-): AlignmentSession<TCue>;
+): AlignmentSession<TCue>
 ```
 
 この generic により、Core は `id` のみを利用しながら、アプリケーション固有の Cue 型を失わずに保持できる。
@@ -295,8 +297,8 @@ function createAlignmentSession<TCue extends Cue>(
 例えば次のコードでは `currentCue` は `LyricCue | undefined` として推論される。
 
 ```ts
-const session = createAlignmentSession({ cues: lyricCues });
-const current = session.currentCue;
+const session = createAlignmentSession({ cues: lyricCues })
+const current = session.currentCue
 ```
 
 ### 7.1 `markCurrent(at)`
@@ -348,7 +350,7 @@ Core package はメディア再生を所有・制御してはならない。
 現在時刻は呼び出し側から明示的に渡す。
 
 ```ts
-session.markCurrent(audio.currentTime);
+session.markCurrent(audio.currentTime)
 ```
 
 この境界により同じ Core を以下と組み合わせられる。
@@ -432,12 +434,12 @@ Core は `id` 以外のプロパティの意味や表示方法を定義しない
 
 Reference app は以下の shortcut を提供する。
 
-| Key | Action |
-| --- | --- |
-| `Space` | current Cue を現在の再生時刻で mark し、次の Cue へ進む |
-| `Backspace` | 直近の Mark 変更を undo |
-| `ArrowLeft` | 前の Cue へ移動 |
-| `ArrowRight` | 次の Cue へ移動 |
+| Key          | Action                                                  |
+| ------------ | ------------------------------------------------------- |
+| `Space`      | current Cue を現在の再生時刻で mark し、次の Cue へ進む |
+| `Backspace`  | 直近の Mark 変更を undo                                 |
+| `ArrowLeft`  | 前の Cue へ移動                                         |
+| `ArrowRight` | 次の Cue へ移動                                         |
 
 Keyboard handling は Core ではなく UI の責務とする。
 
@@ -552,17 +554,17 @@ Rendering は意図的に `cue-align` の下流へ分離する。
 
 ```ts
 const cues = [
-  { id: "a", label: "Alpha" },
-  { id: "b", label: "Beta" },
-];
+  { id: 'a', label: 'Alpha' },
+  { id: 'b', label: 'Beta' },
+]
 
 const alignment = {
   version: 1 as const,
   marks: [
-    { cueId: "a", at: 12.3 },
-    { cueId: "b", at: 15.8 },
+    { cueId: 'a', at: 12.3 },
+    { cueId: 'b', at: 15.8 },
   ],
-};
+}
 ```
 
 Renderer は `cueId` から Cue を参照し、任意時刻に active な Cue を独自ルールで決定して、Cue の追加プロパティを利用した任意の UI や映像を描画できる。

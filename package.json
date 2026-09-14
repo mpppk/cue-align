@@ -1,0 +1,52 @@
+{
+  "name": "cue-align",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.2",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "vp dev --port 3000",
+    "generate-routes": "tsr generate",
+    "build": "vp build",
+    "preview": "vp preview",
+    "lint": "vp lint",
+    "format": "vp fmt . && vp lint --fix",
+    "check": "vp fmt --check .",
+    "deploy": "bun run build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "prepare": "vp config"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.26.0",
+    "@tanstack/router-cli": "^1.132.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
+    "vitest": "4.1.10",
+    "wrangler": "^4.70.0",
+    "vite-plus": "0.2.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss",
+      "sharp",
+      "workerd"
+    ]
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
+    "vitest": "4.1.10"
+  }
+}
