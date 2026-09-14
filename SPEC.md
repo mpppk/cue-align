@@ -37,7 +37,7 @@ v1 は以下を満たさなければならない。
 - キーボードを中心とした高速なオーサリングを可能にする。
 - オーサリング中の undo と Cue 移動を可能にする。
 - Alignment が未完成でも保存・出力でき、後から再開できる。
-- 想定内の入力エラーを型で識別可能にする。
+- 想定内の失敗を `@praha/byethrow` の `Result` と型付きカスタムエラーで識別可能にする。
 - TypeScript から扱いやすく、JSON に容易にシリアライズできる形式とする。
 
 ---
@@ -271,14 +271,16 @@ Cue A の意味上の終了時刻と Cue B の開始時刻が一致するとは�
 
 Core の状態変更ロジックは、現在状態と操作を受け取り、新しい状態を返す純粋関数として実装する。
 
-概念例:
+失敗しうる transition は `@praha/byethrow` の `Result.Result<T, E>` を返し、想定内の失敗で `throw` しない。
 
 ```ts
+import { Result } from '@praha/byethrow'
+
 function markCurrent<TCue extends Cue>(
   state: AlignmentState,
   cues: readonly TCue[],
   at: number,
-): Result<AlignmentState, AlignmentError>
+): Result.Result<AlignmentState, AlignmentError>
 ```
 
 同様に、少なくとも以下の transition を用意する。
@@ -304,6 +306,8 @@ Pure transition は React、DOM、browser API、global state に依存しては�
 概ね以下と同等の API とする。
 
 ```ts
+import { Result } from '@praha/byethrow'
+
 type CreateAlignmentSessionOptions<TCue extends Cue> = {
   cues: readonly TCue[]
   alignment?: Alignment
@@ -315,13 +319,13 @@ interface AlignmentSession<TCue extends Cue> {
   readonly currentCue: TCue | undefined
   readonly currentIndex: number
 
-  markCurrent(at: number): Result<void, AlignmentError>
-  mark(cueId: CueId, at: number): Result<void, AlignmentError>
+  markCurrent(at: number): Result.Result<void, AlignmentError>
+  mark(cueId: CueId, at: number): Result.Result<void, AlignmentError>
 
   undo(): boolean
 
-  seekCue(cueId: CueId): Result<void, AlignmentError>
-  seekIndex(index: number): Result<void, AlignmentError>
+  seekCue(cueId: CueId): Result.Result<void, AlignmentError>
+  seekIndex(index: number): Result.Result<void, AlignmentError>
   nextCue(): void
   previousCue(): void
 
@@ -332,12 +336,12 @@ interface AlignmentSession<TCue extends Cue> {
 
 function createAlignmentSession<TCue extends Cue>(
   options: CreateAlignmentSessionOptions<TCue>,
-): Result<AlignmentSession<TCue>, AlignmentError>
+): Result.Result<AlignmentSession<TCue>, AlignmentError>
 ```
 
 この generic により、Core は `id` のみを利用しながら、アプリケーション固有の Cue 型を失わずに保持できる。
 
-Session facade の mutable state は pure transition の結果によってのみ更新する。
+Session facade の mutable state は pure transition の成功結果によってのみ更新する。`Result.isFailure()` の場合は state を変更しない。
 
 ### 7.3 React との境界
 
@@ -346,7 +350,7 @@ Reference app では Session facade の mutation を React が自動検知する
 React adapter / hook は次のいずれかで状態変更を React に伝播する。
 
 - pure transition の `AlignmentState` を React state として保持する。
-- Session facade を包み、mutation 後に snapshot を更新する。
+- Session facade を包み、mutation 成功後に snapshot を更新する。
 
 Core に React subscription API を導入しない。
 
@@ -356,7 +360,7 @@ Core に React subscription API を導入しない。
 
 1. timestamp を検証する。
 2. current Cue と `at` を対応付ける。
-3. 順序制約に違反する場合は `Result` の error を返す。
+3. 順序制約に違反する場合は `Result.fail()` で型付きエラーを返す。
 4. `undo()` に必要な履歴を記録する。
 5. 次の Cue が存在すれば cursor を次へ進める。
 
@@ -479,6 +483,27 @@ cue.label ?? cue.id
 
 Cue / Alignment JSON は `File.text()` 等でローカルに読み込む。
 
+`File.text()` の reject、`JSON.parse()` の throw、構造 validation の失敗は UI の `try/catch` に流さず、境界で `@praha/byethrow` の `Result` / `ResultAsync` に変換する。
+
+- Promise / throw を伴う処理は `Result.try()` または `Result.fn()` で包む。
+- `JSON.parse()` 等の元例外は custom error の `cause` に保持する。
+- parse 後の構造 validation は `Result.Result<T, E>` を返す。
+- Core の `AlignmentError` と、file / JSON 入力に関する error union は分離する。
+
+概念上、Reference app の入力パイプラインは次のとおり。
+
+```text
+File
+  ↓ ResultAsync
+File.text()
+  ↓ Result
+JSON.parse()
+  ↓ Result
+structural validation
+  ↓
+Cue[] / Alignment
+```
+
 ### 9.2 主画面
 
 最低限、次の情報を表示する。
@@ -570,56 +595,121 @@ Reference app は未完成の Alignment を含め、いつでも JSON export で
 - timestamp が有効である。
 - Mark 済み Cue の時刻が Cue 順序と矛盾しない。
 
-不正データを黙って削除・修正してはならず、明示的な validation error とする。
+不正データを黙って削除・修正してはならず、`Result.fail()` で明示的な validation error を返す。
 
 ---
 
 ## 12. Error model
 
-入力・ユーザー操作によって通常発生し得るエラーは、exception のみで表現せず、discriminated union と `Result` でプログラムから識別可能にする。
+TypeScript 実装では `.agents/skills/typescript/SKILL.md` の規約に従う。
+
+### 12.1 Result
+
+独自の `Result<T, E>` は定義しない。失敗しうる関数は `@praha/byethrow` の `Result.Result<T, E>` / `Result.ResultAsync<T, E>` を返す。
 
 ```ts
-type Result<T, E> =
-  | { ok: true; value: T }
-  | { ok: false; error: E }
+import { Result } from '@praha/byethrow'
 ```
 
-概念上のエラー型は以下。
+想定内のユーザー入力エラーや domain error で `throw` しない。
+
+- 成功: `Result.succeed(value)`
+- 失敗: `Result.fail(error)`
+- throw しうる同期 / 非同期処理: `Result.try()` または `Result.fn()`
+- 合成: `Result.pipe()`、`Result.andThen()`、`Result.map()`、`Result.mapError()`、`Result.orElse()`
+
+### 12.2 ErrorFactory
+
+エラーは plain object や素の `Error` ではなく `@praha/error-factory` から生成したカスタムエラークラスで表現する。
+
+```ts
+import { ErrorFactory } from '@praha/error-factory'
+
+class DuplicateCueIdError extends ErrorFactory({
+  name: 'DuplicateCueIdError',
+  message: 'Cue ID must be unique',
+  fields: ErrorFactory.fields<{ cueId: CueId }>(),
+}) {}
+
+class UnknownCueIdError extends ErrorFactory({
+  name: 'UnknownCueIdError',
+  message: 'Cue ID was not found',
+  fields: ErrorFactory.fields<{ cueId: CueId }>(),
+}) {}
+
+class InvalidTimeError extends ErrorFactory({
+  name: 'InvalidTimeError',
+  message: 'Timeline position is invalid',
+  fields: ErrorFactory.fields<{ at: number }>(),
+}) {}
+
+class NonMonotonicTimeError extends ErrorFactory({
+  name: 'NonMonotonicTimeError',
+  message: 'Timestamp violates cue ordering',
+  fields: ErrorFactory.fields<{
+    cueId: CueId
+    at: number
+    min?: number
+    max?: number
+  }>(),
+}) {}
+
+class UnsupportedAlignmentVersionError extends ErrorFactory({
+  name: 'UnsupportedAlignmentVersionError',
+  message: 'Alignment version is not supported',
+  fields: ErrorFactory.fields<{ version: unknown }>(),
+}) {}
+
+class InvalidCueIndexError extends ErrorFactory({
+  name: 'InvalidCueIndexError',
+  message: 'Cue index is invalid',
+  fields: ErrorFactory.fields<{ index: number }>(),
+}) {}
+```
+
+Core の expected error union は Error class の union とする。
 
 ```ts
 type AlignmentError =
-  | {
-      type: 'duplicate-cue-id'
-      cueId: CueId
-    }
-  | {
-      type: 'unknown-cue-id'
-      cueId: CueId
-    }
-  | {
-      type: 'invalid-time'
-      at: number
-    }
-  | {
-      type: 'non-monotonic-time'
-      cueId: CueId
-      at: number
-      min?: number
-      max?: number
-    }
-  | {
-      type: 'unsupported-alignment-version'
-      version: unknown
-    }
-  | {
-      type: 'invalid-cue-index'
-      index: number
-    }
+  | DuplicateCueIdError
+  | UnknownCueIdError
+  | InvalidTimeError
+  | NonMonotonicTimeError
+  | UnsupportedAlignmentVersionError
+  | InvalidCueIndexError
 ```
 
-Validation、mark、seek 等の expected failure は `Result` で返す。
+呼び出し側は `error.name` または `instanceof` で絞り込める。
 
-ライブラリ内部の programming error や invariant violation まで必ず `Result` 化する必要はない。
+### 12.3 Error の責務境界
+
+Core の domain error と Reference app の I/O / parse error を同じ union に混在させない。
+
+例えば Reference app 側では、次のような別 error を持てる。
+
+```ts
+class InputReadError extends ErrorFactory({
+  name: 'InputReadError',
+  message: 'Failed to read input file',
+  fields: ErrorFactory.fields<{ source: 'cue' | 'alignment' }>(),
+}) {}
+
+class InputParseError extends ErrorFactory({
+  name: 'InputParseError',
+  message: 'Failed to parse input JSON',
+  fields: ErrorFactory.fields<{ source: 'cue' | 'alignment' }>(),
+}) {}
+
+type AuthoringError = AlignmentError | InputReadError | InputParseError
+```
+
+元の例外が存在する場合は `cause` に保持する。
+
+### 12.4 throw の扱い
+
+ユーザー入力や通常操作で予測可能な失敗は `Result` で返す。
+
+ライブラリ内部の programming error や、コード上成立しないはずの invariant violation は通常の exception として扱ってよい。ただし外部 API、Promise、`JSON.parse()` など throw / reject しうる処理を domain/UI ロジックへ直接漏らさず、可能な限り境界で custom error に変換する。
 
 ---
 
@@ -645,6 +735,8 @@ cue-align/
 
     features/
       alignment/
+        errors.ts
+        input.ts
         components/
           MediaPlayer.tsx
           CueViewer.tsx
@@ -663,6 +755,8 @@ cue-align/
 ```
 
 `src/core/**` は React、DOM、TanStack、Cloudflare、`HTMLMediaElement` に依存してはならない。
+
+`src/core/errors.ts` は Core の domain error のみを持ち、browser/file input 固有エラーは `src/features/alignment/errors.ts` に置く。
 
 将来 npm package として独立させる必要が生じた場合、`src/core` を `packages/core` へ移動する。
 
@@ -786,15 +880,18 @@ Core を framework-independent に保ったまま、React、Remotion、各種 me
    観測された timestamp のみを保存し、Cue のアプリケーション固有データや表示固有の区間・状態は Alignment に複製しない。
 
 7. **Expected errors are values**  
-   ユーザー入力や通常操作で発生し得る失敗は discriminated union と `Result` で扱う。
+   ユーザー入力や通常操作で発生し得る失敗は `@praha/byethrow` の `Result` と `@praha/error-factory` の型付きエラーで扱う。独自 Result や plain-object error を定義しない。
 
-8. **Fast human input first**  
+8. **Error boundaries stay local**  
+   Core の domain error と Reference app の I/O / parse error を分離し、外部例外は境界で custom error に変換して `cause` を保持する。
+
+9. **Fast human input first**  
    リアルタイム同期の1パスは、基本的にメディアを再生し Cue ごとに1キー押すだけで完了できるようにする。
 
-9. **Correction is expected**  
-   Undo、navigation、save/resume、将来の精密編集を通常フローとして扱う。
+10. **Correction is expected**  
+    Undo、navigation、save/resume、将来の精密編集を通常フローとして扱う。
 
-10. **Automation is additive**  
+11. **Automation is additive**  
     将来的な自動 Alignment も人間が生成するものと同じ Alignment format を使用する。
 
 ---
@@ -806,20 +903,22 @@ Core を framework-independent に保ったまま、React、Remotion、各種 me
 1. `id` を持ち、任意の追加プロパティを含められる順序付き Cue 配列を読み込める。
 2. Core の主要状態遷移が pure function として unit test されている。
 3. Session を通して Cue の具体型が保持され、`currentCue` などから追加プロパティへ型安全にアクセスできる。
-4. Expected error が `AlignmentError` と `Result` で識別可能である。
-5. Reference browser app でローカルの音声を読み込める。
-6. メディアを再生し、Cue ごとに Space を押して同期できる。
-7. Space を押した瞬間の `HTMLMediaElement.currentTime` を Cue の Mark として記録できる。
-8. `event.repeat` による意図しない連続 Mark が発生しない。
-9. 誤った打刻を undo できる。
-10. Cue cursor を前後へ移動できる。
-11. 既存 Cue の Mark を修正できる。
-12. 未完成状態を含む Alignment を JSON として export できる。
-13. Export 済み Alignment を再度読み込み、作業を継続できる。
-14. 不正な Cue / Alignment を明示的な validation error として拒否できる。
-15. Core が DOM、React、特定 media player、Remotion に依存しない。
-16. Alignment が Cue の追加プロパティを複製せず、downstream renderer から Cue ID と時刻の対応として利用できる。
-17. Reference app は `label ?? id` を primary Cue text として表示できる。
+4. Core の expected failure が `@praha/byethrow` の `Result` と `AlignmentError` で識別可能である。
+5. Core error が `@praha/error-factory` 由来のカスタム Error class として表現されている。
+6. Reference browser app でローカルの音声を読み込める。
+7. Cue / Alignment の file read・JSON parse・validation failure が `Result` / `ResultAsync` と custom error で扱われ、通常フローで uncaught exception にならない。
+8. メディアを再生し、Cue ごとに Space を押して同期できる。
+9. Space を押した瞬間の `HTMLMediaElement.currentTime` を Cue の Mark として記録できる。
+10. `event.repeat` による意図しない連続 Mark が発生しない。
+11. 誤った打刻を undo できる。
+12. Cue cursor を前後へ移動できる。
+13. 既存 Cue の Mark を修正できる。
+14. 未完成状態を含む Alignment を JSON として export できる。
+15. Export 済み Alignment を再度読み込み、作業を継続できる。
+16. 不正な Cue / Alignment を明示的な validation error として拒否できる。
+17. Core が DOM、React、特定 media player、Remotion に依存しない。
+18. Alignment が Cue の追加プロパティを複製せず、downstream renderer から Cue ID と時刻の対応として利用できる。
+19. Reference app は `label ?? id` を primary Cue text として表示できる。
 
 Video 対応は `HTMLMediaElement` 共通 API を利用して audio の end-to-end フローが安定した後に追加してよい。
 
@@ -845,9 +944,9 @@ Alignment JSON
 
 推奨実装順序:
 
-1. `src/core` の型、validation、state、pure transition、selector、session facade
+1. `src/core` の型、ErrorFactory ベースの error、validation、state、pure transition、selector、session facade
 2. Core unit test
-3. Cue JSON / optional Alignment の読み込み
+3. Cue JSON / optional Alignment の file read・parse・validation pipeline (`Result` / `ResultAsync`)
 4. Audio file の local playback
 5. Space / Backspace / ArrowLeft / ArrowRight
 6. Alignment JSON export
