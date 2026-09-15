@@ -1,8 +1,8 @@
 import { Result } from '@praha/byethrow'
 import { useMemo, useRef, useState } from 'react'
 
-import { createAlignmentState } from '#/core'
-import type { AlignmentState } from '#/core'
+import { createAlignmentState } from '@mpppk/cue-align-core'
+import type { AlignmentState } from '@mpppk/cue-align-core'
 import type { AuthoringInput } from '../authoring'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'

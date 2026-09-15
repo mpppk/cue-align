@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test'
 
-import { asCueId } from '#/core'
+import { asCueId } from '@mpppk/cue-align-core'
 import { getCueMetadataEntries } from './CueViewer'
 
 describe('getCueMetadataEntries', () => {

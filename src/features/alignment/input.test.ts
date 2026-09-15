@@ -7,8 +7,8 @@ import {
   UnsupportedAlignmentVersionError,
   UnknownCueIdError,
   asCueId,
-} from '#/core'
-import type { Alignment } from '#/core'
+} from '@mpppk/cue-align-core'
+import type { Alignment } from '@mpppk/cue-align-core'
 import {
   InputParseError,
   InputReadError,

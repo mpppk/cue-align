@@ -1,8 +1,8 @@
 import { Result } from '@praha/byethrow'
 import { describe, expect, it } from 'vite-plus/test'
 
-import { asTimelinePosition } from '#/core'
-import type { TimelinePosition } from '#/core'
+import { asTimelinePosition } from '@mpppk/cue-align-core'
+import type { TimelinePosition } from '@mpppk/cue-align-core'
 import {
   handleAlignmentShortcut,
   isEditableShortcutTarget,

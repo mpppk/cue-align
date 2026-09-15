@@ -1,6 +1,6 @@
 import { Result } from '@praha/byethrow'
 
-import type { Alignment } from '#/core'
+import type { Alignment } from '@mpppk/cue-align-core'
 import type { ReadAlignmentFileError, ReadCueFileError } from './errors'
 import { readAlignmentFile, readCueFile } from './input'
 import type { ReferenceCue, TextFile } from './input'

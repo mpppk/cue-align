@@ -2,8 +2,8 @@ import { Result } from '@praha/byethrow'
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 
-import { asTimelinePosition } from '#/core'
-import type { MarkCurrentError, TimelinePosition } from '#/core'
+import { asTimelinePosition } from '@mpppk/cue-align-core'
+import type { MarkCurrentError, TimelinePosition } from '@mpppk/cue-align-core'
 
 type AlignmentShortcut = 'mark-current' | 'undo' | 'previous-cue' | 'next-cue'
 

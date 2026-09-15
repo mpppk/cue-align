@@ -1,8 +1,8 @@
 import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
 import type { Result } from '@praha/byethrow'
-import { asCueId, asTimelinePosition } from '#/core'
-import type { Alignment } from '#/core'
+import { asCueId, asTimelinePosition } from '@mpppk/cue-align-core'
+import type { Alignment } from '@mpppk/cue-align-core'
 import { readAuthoringInput } from './authoring'
 import type { AuthoringInput, ReadAuthoringInputError } from './authoring'
 import { InputReadError } from './errors'

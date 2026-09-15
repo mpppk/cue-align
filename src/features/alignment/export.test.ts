@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test'
 
-import { asCueId, asTimelinePosition } from '#/core'
+import { asCueId, asTimelinePosition } from '@mpppk/cue-align-core'
 import { parseAlignmentJson } from './input'
 import { serializeAlignment } from './export'
 
