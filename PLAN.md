@@ -13,7 +13,7 @@
 - [x] Phase 5: Export / Resume
 - [ ] Phase 6: Video Support / v1 Polish
 
-現在は **Phase 5 完了、Phase 6 着手前**。
+現在は **Phase 6 の local video support 完了、v1 UX polish 着手前**。
 
 ## Implementation principles
 
@@ -137,13 +137,22 @@ Audio を利用した v1 の主要 workflow はこの時点で end-to-end で成
 
 目的: Audio で確立した workflow を Video に拡張し、v1 として最低限の使い勝手を整える。
 
-### Next PR: Local video support
+### Local video support
 
-- `<video>` で local file を再生
-- Audio と同じ `HTMLMediaElement` ベースの clock handling を再利用
+Status: **Done**
+
+PR: #17 `feat: add local video support`
+
+完了済み:
+
+- Setup で audio / video file を選択可能
+- `<audio>` / `<video>` の local playback
+- Audio と同じ `HTMLMediaElement` ベースの clock handling
+- keyboard Mark の media ref を `HTMLMediaElement` に一般化
 - Audio / Video の分岐を Core へ持ち込まない
+- MIME type / extension による media kind 判定テスト
 
-### PR: v1 UX polish
+### Next PR: v1 UX polish
 
 候補:
 
