@@ -112,11 +112,7 @@ export function SetupForm({ onStart }: SetupFormProps) {
           </div>
         )}
 
-        <button
-          className="primary-button"
-          type="submit"
-          disabled={!canStart}
-        >
+        <button className="primary-button" type="submit" disabled={!canStart}>
           {isLoading ? '読み込み中…' : 'Editor を開く'}
         </button>
       </form>
