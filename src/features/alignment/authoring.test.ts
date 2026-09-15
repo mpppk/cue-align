@@ -40,9 +40,7 @@ describe('readAuthoringInput', () => {
     expect(result).toBeSuccess((input) => {
       const expected: Alignment = {
         version: 1,
-        marks: [
-          { cueId: asCueId('a'), at: asTimelinePosition(1.5) },
-        ],
+        marks: [{ cueId: asCueId('a'), at: asTimelinePosition(1.5) }],
       }
       expect(input.alignment).toEqual(expected)
     })
