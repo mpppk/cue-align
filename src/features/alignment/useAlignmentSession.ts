@@ -13,7 +13,7 @@ import {
   seekCue,
   seekIndex,
   undo,
-} from '#/core'
+} from '@mpppk/cue-align-core'
 import type {
   Alignment,
   AlignmentState,
@@ -26,7 +26,7 @@ import type {
   SeekCueError,
   SeekIndexError,
   TimelinePosition,
-} from '#/core'
+} from '@mpppk/cue-align-core'
 
 export type AlignmentSessionSnapshot<TCue extends Cue> = {
   currentCue: TCue | undefined

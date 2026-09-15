@@ -5,8 +5,8 @@ import {
   asCueIndex,
   asTimelinePosition,
   createAlignmentState,
-} from '#/core'
-import type { AlignmentState } from '#/core'
+} from '@mpppk/cue-align-core'
+import type { AlignmentState } from '@mpppk/cue-align-core'
 import type { ReferenceCue } from './input'
 import { getAlignmentSessionSnapshot } from './useAlignmentSession'
 import type { AlignmentSessionSnapshot } from './useAlignmentSession'

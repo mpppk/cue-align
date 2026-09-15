@@ -1,7 +1,7 @@
 import { Result } from '@praha/byethrow'
 import { ErrorFactory } from '@praha/error-factory'
 
-import type { Alignment } from '#/core'
+import type { Alignment } from '@mpppk/cue-align-core'
 
 export class AlignmentExportError extends ErrorFactory({
   name: 'AlignmentExportError',

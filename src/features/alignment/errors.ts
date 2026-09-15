@@ -4,7 +4,7 @@ import type {
   UnsupportedAlignmentVersionError,
   ValidateAlignmentError,
   ValidateCuesError,
-} from '#/core'
+} from '@mpppk/cue-align-core'
 
 export type InputSource = 'cue' | 'alignment'
 

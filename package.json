@@ -19,6 +19,7 @@
     "prepare": "vp config"
   },
   "dependencies": {
+    "@mpppk/cue-align-core": "file:packages/core",
     "@praha/byethrow": "^0.12.0",
     "@praha/error-factory": "^1.4.1",
     "@tanstack/react-router": "latest",

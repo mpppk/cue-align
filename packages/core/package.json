@@ -1,0 +1,31 @@
+{
+  "name": "@mpppk/cue-align-core",
+  "version": "0.1.0",
+  "description": "Framework-independent alignment domain core for cue-align",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vp pack",
+    "check": "vp check",
+    "test": "vp test"
+  },
+  "dependencies": {
+    "@praha/byethrow": "^0.12.0",
+    "@praha/error-factory": "^1.4.1"
+  },
+  "devDependencies": {
+    "@praha/byethrow-testing": "^0.12.0",
+    "typescript": "^7.0.0",
+    "vite-plus": "0.2.8",
+    "vitest": "4.1.11"
+  }
+}

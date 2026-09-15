@@ -6,8 +6,8 @@ import {
   asTimelinePosition,
   validateAlignment,
   validateCues,
-} from '#/core'
-import type { Alignment, Cue, Mark } from '#/core'
+} from '@mpppk/cue-align-core'
+import type { Alignment, Cue, Mark } from '@mpppk/cue-align-core'
 import {
   InputParseError,
   InputReadError,
