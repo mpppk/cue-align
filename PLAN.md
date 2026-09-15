@@ -11,9 +11,9 @@
 - [x] Phase 3: Audio Authoring
 - [x] Phase 4: Authoring Controls
 - [x] Phase 5: Export / Resume
-- [ ] Phase 6: Video Support / v1 Polish
+- [x] Phase 6: Video Support / v1 Polish
 
-現在は **Phase 6 の local video support 完了、v1 UX polish 着手前**。
+現在は **v1 implementation plan の全 Phase 完了**。
 
 ## Implementation principles
 
@@ -135,13 +135,14 @@ Audio を利用した v1 の主要 workflow はこの時点で end-to-end で成
 
 ## Phase 6: Video Support / v1 Polish
 
-目的: Audio で確立した workflow を Video に拡張し、v1 として最低限の使い勝手を整える。
-
-### Local video support
-
 Status: **Done**
 
-PR: #17 `feat: add local video support`
+目的: Audio で確立した workflow を Video に拡張し、v1 として最低限の使い勝手を整える。
+
+PRs:
+
+- #17 `feat: add local video support`
+- #18 `feat: polish v1 authoring UX`
 
 完了済み:
 
@@ -151,17 +152,13 @@ PR: #17 `feat: add local video support`
 - keyboard Mark の media ref を `HTMLMediaElement` に一般化
 - Audio / Video の分岐を Core へ持ち込まない
 - MIME type / extension による media kind 判定テスト
-
-### Next PR: v1 UX polish
-
-候補:
-
 - current / previous / next Cue の視認性改善
-- `label ?? id` の primary display
-- Cue の追加 metadata 表示
+- `label ?? id` を primary display とし、label がある場合は Cue ID も表示
+- Current Cue の追加 metadata 表示
 - keyboard shortcut guide
-- empty / loading / error state の整理
-- completed state の表示
+- empty / error / completed state の明示
+- 選択中 media file 名の表示
+- responsive な editor actions と video 表示
 
 ## v1 Definition of Done
 
