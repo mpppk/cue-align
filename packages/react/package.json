@@ -19,14 +19,13 @@
     "test": "vp test"
   },
   "dependencies": {
+    "@mpppk/cue-align-core": "file:../core",
     "@praha/byethrow": "^0.12.0"
   },
   "peerDependencies": {
-    "@mpppk/cue-align-core": "^0.1.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "@mpppk/cue-align-core": "file:../core",
     "@praha/byethrow-testing": "^0.12.0",
     "@types/react": "^19.2.0",
     "react": "^19.2.0",
