@@ -1,11 +1,7 @@
 import { Result } from '@praha/byethrow'
 
 import { asTimelinePosition } from '@mpppk/cue-align-core'
-import type {
-  Alignment,
-  CueId,
-  TimelinePosition,
-} from '@mpppk/cue-align-core'
+import type { Alignment, CueId, TimelinePosition } from '@mpppk/cue-align-core'
 import {
   InvalidFramesPerSecondError,
   InvalidRemotionFrameError,
@@ -61,10 +57,8 @@ export const validateRemotionFrame = (
   return Result.succeed(asRemotionFrame(frame))
 }
 
-const toFrame = (
-  at: TimelinePosition,
-  fps: FramesPerSecond,
-): RemotionFrame => asRemotionFrame(Math.round(at * fps))
+const toFrame = (at: TimelinePosition, fps: FramesPerSecond): RemotionFrame =>
+  asRemotionFrame(Math.round(at * fps))
 
 /**
  * Converts a canonical TimelinePosition to the nearest Remotion frame.
@@ -90,9 +84,7 @@ export const frameToTimelinePosition = (
     Result.andThen((validFps) =>
       Result.pipe(
         validateRemotionFrame(frame),
-        Result.map((validFrame) =>
-          asTimelinePosition(validFrame / validFps),
-        ),
+        Result.map((validFrame) => asTimelinePosition(validFrame / validFps)),
       ),
     ),
   )
@@ -100,7 +92,10 @@ export const frameToTimelinePosition = (
 export const alignmentToFrameMarks = (
   alignment: Alignment,
   fps: number,
-): Result.Result<ReadonlyArray<RemotionFrameMark>, InvalidFramesPerSecondError> =>
+): Result.Result<
+  ReadonlyArray<RemotionFrameMark>,
+  InvalidFramesPerSecondError
+> =>
   Result.pipe(
     validateFramesPerSecond(fps),
     Result.map((validFps) =>
@@ -120,7 +115,9 @@ export const getCueFrameMark = (
   Result.pipe(
     validateFramesPerSecond(fps),
     Result.andThen((validFps) => {
-      const mark = alignment.marks.find((candidate) => candidate.cueId === cueId)
+      const mark = alignment.marks.find(
+        (candidate) => candidate.cueId === cueId,
+      )
       if (mark === undefined) {
         return Result.fail(new MissingMarkError({ cueId }))
       }
