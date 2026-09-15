@@ -14,6 +14,8 @@
       },
       "devDependencies": {
         "@cloudflare/vite-plugin": "^1.26.0",
+        "@praha/byethrow-oxlint": "^0.12.0",
+        "@praha/byethrow-testing": "^0.12.0",
         "@tanstack/router-cli": "^1.132.0",
         "@types/node": "^22.10.2",
         "@types/react": "^19.2.0",
@@ -315,6 +317,10 @@
     "@poppinss/exception": ["@poppinss/exception@1.2.3", "", {}, "sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw=="],
 
     "@praha/byethrow": ["@praha/byethrow@0.12.0", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" }, "peerDependencies": { "typescript": ">=5.0.0" } }, "sha512-Q3dRHW8aGqYbEe/W5YKrik6GbtfLGdCrCVcDcP/YJe4uhhbbrkEw9XoRuPZhfMb4uLrUXk27h4phK3I8+cAdRw=="],
+
+    "@praha/byethrow-oxlint": ["@praha/byethrow-oxlint@0.12.0", "", { "dependencies": { "@oxlint/plugins": "^1.68.0" }, "peerDependencies": { "@praha/byethrow": "0.12.0", "oxlint": "^1.0.0" } }, "sha512-zdg/oa50/N+a62FsCVHz/J+9RnuaIWZVzwo9frIXZdyPuNNHRYBCee9AwCnfYinOQ6dLOzFmOS9lATnw/MDGdQ=="],
+
+    "@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
 
     "@praha/error-factory": ["@praha/error-factory@1.4.1", "", {}, "sha512-HA+y+xwmQIl9EPvZonRk1/hsSAvAlpDjlpruyW8kTAQ++Oq5Fi7hFV0Y84TLHXJ6SciYHlKGqrekrS5wzkD5+Q=="],
 
