@@ -8,7 +8,7 @@ import { InvalidAlignmentInputError, InvalidCueInputError } from '../errors'
 
 export type SetupSelection = {
   authoring: AuthoringInput
-  audioFile: File
+  mediaFile: File
 }
 
 type SetupFormProps = {
@@ -49,17 +49,17 @@ const formatInputError = (error: ReadAuthoringInputError): string => {
 
 export function SetupForm({ onStart }: SetupFormProps) {
   const [cueFile, setCueFile] = useState<File>()
-  const [audioFile, setAudioFile] = useState<File>()
+  const [mediaFile, setMediaFile] = useState<File>()
   const [alignmentFile, setAlignmentFile] = useState<File>()
   const [error, setError] = useState<ReadAuthoringInputError>()
   const [isLoading, setIsLoading] = useState(false)
   const canStart =
-    cueFile !== undefined && audioFile !== undefined && !isLoading
+    cueFile !== undefined && mediaFile !== undefined && !isLoading
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (cueFile === undefined || audioFile === undefined) {
+    if (cueFile === undefined || mediaFile === undefined) {
       return
     }
 
@@ -74,14 +74,14 @@ export function SetupForm({ onStart }: SetupFormProps) {
       return
     }
 
-    onStart({ authoring: result.value, audioFile })
+    onStart({ authoring: result.value, mediaFile })
   }
 
   return (
     <section className="panel setup-panel" aria-labelledby="setup-title">
       <div className="section-heading">
         <p className="eyebrow">Reference authoring tool</p>
-        <h1 id="setup-title">Cue sequence を音声へ合わせる</h1>
+        <h1 id="setup-title">Cue sequence をメディアへ合わせる</h1>
         <p>選択したファイルはブラウザ内だけで扱います。</p>
       </div>
 
@@ -93,10 +93,10 @@ export function SetupForm({ onStart }: SetupFormProps) {
           onChange={setCueFile}
         />
         <FileField
-          label="Audio file"
+          label="Audio / Video file"
           hint="必須"
-          accept="audio/*"
-          onChange={setAudioFile}
+          accept="audio/*,video/*"
+          onChange={setMediaFile}
         />
         <FileField
           label="Alignment JSON"
