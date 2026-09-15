@@ -22,7 +22,7 @@ function Home() {
     <main className="app-shell">
       <Editor
         authoring={selection.authoring}
-        audioFile={selection.audioFile}
+        mediaFile={selection.mediaFile}
         onBack={() => setSelection(undefined)}
       />
     </main>
