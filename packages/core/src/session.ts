@@ -1,6 +1,7 @@
 import { Result } from '@praha/byethrow'
 
 import type {
+  AdjustMarkError,
   CreateAlignmentSessionError,
   MarkCurrentError,
   MarkError,
@@ -11,6 +12,7 @@ import { getAlignment, getCurrentCue, getMark, isComplete } from './selectors'
 import { createAlignmentState } from './state'
 import type { CreateAlignmentStateOptions } from './state'
 import {
+  adjustMark as applyAdjustMark,
   mark as applyMark,
   markCurrent as applyMarkCurrent,
   nextCue as applyNextCue,
@@ -34,6 +36,10 @@ export type AlignmentSession<TCue extends Cue> = {
   readonly currentIndex: CueIndex
   markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
   mark: (cueId: CueId, at: TimelinePosition) => Result.Result<void, MarkError>
+  adjustMark: (
+    cueId: CueId,
+    at: TimelinePosition,
+  ) => Result.Result<void, AdjustMarkError>
   undo: () => boolean
   seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
   seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
@@ -76,6 +82,15 @@ export const createAlignmentSession = <TCue extends Cue>(
     },
     mark: (cueId, at) => {
       const result = applyMark(state, cues, cueId, at)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      state = result.value
+      return Result.succeed(undefined)
+    },
+    adjustMark: (cueId, at) => {
+      const result = applyAdjustMark(state, cues, cueId, at)
       if (Result.isFailure(result)) {
         return Result.fail(result.error)
       }
