@@ -1,7 +1,7 @@
 {
-  "name": "@mpppk/cue-align-core",
+  "name": "@mpppk/cue-align-react",
   "version": "0.1.0",
-  "description": "Framework-independent alignment domain core for cue-align",
+  "description": "React adapter for cue-align",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.mjs",
@@ -22,11 +22,16 @@
     "test": "vp test"
   },
   "dependencies": {
-    "@praha/byethrow": "^0.12.0",
-    "@praha/error-factory": "^1.4.1"
+    "@mpppk/cue-align-core": "file:../core",
+    "@praha/byethrow": "^0.12.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@praha/byethrow-testing": "^0.12.0",
+    "@types/react": "^19.2.0",
+    "react": "^19.2.0",
     "typescript": "^7.0.0",
     "vite-plus": "0.2.8",
     "vitest": "4.1.11"
