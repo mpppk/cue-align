@@ -18,7 +18,6 @@ jobs:
       - run: vp -C packages/core pack
       - run: vp -C packages/react pack
       - run: vp -C packages/remotion pack
-      - run: vp check --fix
-      - run: git diff --exit-code
+      - run: vp check
       - run: vp test
       - run: vp build
