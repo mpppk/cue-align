@@ -34,6 +34,14 @@ const config = defineConfig({
     ],
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',
+      'byethrow/consistent-namespace': 'error',
+      'byethrow/no-ambiguous-error-type': 'error',
+      'byethrow/no-ambiguous-success-type': 'error',
+      'byethrow/no-negated-type-guards': 'error',
+      'byethrow/no-throw-in-callback': 'error',
+      'byethrow/no-try-catch-in-callback': 'error',
+      'byethrow/prefer-result-async': 'error',
+      'byethrow/prefer-result-maybe-async': 'error',
     },
     overrides: [
       {
@@ -239,11 +247,27 @@ const config = defineConfig({
           browser: true,
         },
       },
+      {
+        files: ['**/*.test.*', '**/*.test-d.*', '**/__tests__/**/*'],
+        jsPlugins: [
+          {
+            name: 'byethrow',
+            specifier: '@praha/byethrow-oxlint',
+          },
+        ],
+        rules: {
+          'byethrow/prefer-result-matchers': 'error',
+        },
+      },
     ],
     jsPlugins: [
       {
         name: 'vite-plus',
         specifier: 'vite-plus/oxlint-plugin',
+      },
+      {
+        name: 'byethrow',
+        specifier: '@praha/byethrow-oxlint',
       },
     ],
   },
@@ -263,6 +287,7 @@ const config = defineConfig({
   },
   test: {
     include: ['src/**/*.test.{ts,tsx}', 'packages/*/src/**/*.test.{ts,tsx}'],
+    setupFiles: ['./vitest.setup.ts'],
     passWithNoTests: true,
   },
   resolve: { tsconfigPaths: true },

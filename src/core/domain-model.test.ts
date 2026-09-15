@@ -103,17 +103,16 @@ describe('alignment domain model', () => {
       ],
     })
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
-      expect(result.error).toBeInstanceOf(DuplicateCueIdError)
-    }
+    expect(result).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(DuplicateCueIdError)
+    })
   })
 
   it('preserves the concrete cue type and advances after markCurrent', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
     expect(session.currentCue?.label).toBe('Alpha')
-    expect(Result.isSuccess(session.markCurrent(position(1.25)))).toBe(true)
+    expect(session.markCurrent(position(1.25))).toBeSuccess()
     expect(session.currentCue?.label).toBe('Beta')
     expect(session.getMark(ids.a)).toEqual({ cueId: 'a', at: 1.25 })
   })
@@ -138,25 +137,24 @@ describe('alignment domain model', () => {
   it('rejects a mark that violates neighboring timestamps without mutating state', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    expect(Result.isSuccess(session.mark(ids.a, position(10)))).toBe(true)
-    expect(Result.isSuccess(session.mark(ids.c, position(20)))).toBe(true)
+    expect(session.mark(ids.a, position(10))).toBeSuccess()
+    expect(session.mark(ids.c, position(20))).toBeSuccess()
 
     const result = session.mark(ids.b, position(21))
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
-      expect(result.error).toBeInstanceOf(NonMonotonicTimeError)
-    }
+    expect(result).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(NonMonotonicTimeError)
+    })
     expect(session.getMark(ids.b)).toBeUndefined()
   })
 
   it('allows re-marking a cue when the new timestamp remains ordered', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
 
-    expect(Result.isSuccess(session.mark(ids.a, position(10)))).toBe(true)
-    expect(Result.isSuccess(session.mark(ids.b, position(20)))).toBe(true)
-    expect(Result.isSuccess(session.mark(ids.c, position(30)))).toBe(true)
-    expect(Result.isSuccess(session.mark(ids.b, position(25)))).toBe(true)
+    expect(session.mark(ids.a, position(10))).toBeSuccess()
+    expect(session.mark(ids.b, position(20))).toBeSuccess()
+    expect(session.mark(ids.c, position(30))).toBeSuccess()
+    expect(session.mark(ids.b, position(25))).toBeSuccess()
 
     expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 25 })
   })
@@ -214,19 +212,17 @@ describe('alignment domain model', () => {
       },
     })
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
-      expect(result.error).toBeInstanceOf(NonMonotonicTimeError)
-    }
+    expect(result).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(NonMonotonicTimeError)
+    })
   })
 
   it('returns an error when seeking outside the cue list', () => {
     const session = unwrapSession(createAlignmentSession({ cues }))
     const result = session.seekIndex(index(99))
 
-    expect(Result.isFailure(result)).toBe(true)
-    if (Result.isFailure(result)) {
-      expect(result.error).toBeInstanceOf(InvalidCueIndexError)
-    }
+    expect(result).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(InvalidCueIndexError)
+    })
   })
 })
