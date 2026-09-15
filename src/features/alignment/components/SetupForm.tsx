@@ -108,7 +108,9 @@ export function SetupForm({ onStart }: SetupFormProps) {
         <button
           className="primary-button"
           type="submit"
-          disabled={cueFile === undefined || audioFile === undefined || isLoading}
+          disabled={
+            cueFile === undefined || audioFile === undefined || isLoading
+          }
         >
           {isLoading ? '読み込み中…' : 'Editor を開く'}
         </button>
