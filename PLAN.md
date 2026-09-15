@@ -9,11 +9,11 @@
 - [x] Phase 1: Domain Core
 - [x] Phase 2: Input Pipeline
 - [x] Phase 3: Audio Authoring
-- [ ] Phase 4: Authoring Controls
+- [x] Phase 4: Authoring Controls
 - [ ] Phase 5: Export / Resume
 - [ ] Phase 6: Video Support / v1 Polish
 
-現在は **Phase 3 完了、Phase 4 着手前**。
+現在は **Phase 4 完了、Phase 5 着手前**。
 
 ## Implementation principles
 
@@ -96,15 +96,13 @@ React state の current time は表示専用とし、Mark の source of truth �
 
 ## Phase 4: Authoring Controls
 
+Status: **Done**
+
+PR: #15 `feat: add keyboard authoring controls`
+
 目的: 1パスの手動 alignment を実用可能にする。
 
-### Next PR: Keyboard authoring controls
-
-想定タイトル:
-
-`feat: add keyboard authoring controls`
-
-実装内容:
+完了済み:
 
 - `Space`: current Cue を mark
 - `Backspace`: undo
@@ -113,22 +111,15 @@ React state の current time は表示専用とし、Mark の source of truth �
 - `event.repeat` の抑止
 - editable element focus 時の shortcut 無効化
 - handled shortcut の `preventDefault()`
-
-Mark 時にはイベント発生時点の `HTMLMediaElement.currentTime` を直接読み、`TimelinePosition` に変換して Core へ渡す。
-
-Acceptance criteria:
-
-- Audio 再生中に Cue ごとに Space を押すだけで Alignment を作成できる。
-- Mark 後に next Cue へ進む。
-- Undo で直前の Mark 変更と cursor を戻せる。
-- navigation のみでは Alignment が変更されない。
-- 長押しによる意図しない連続 Mark が発生しない。
+- Mark 時にイベント発生時点の `HTMLMediaElement.currentTime` を直接読み、`TimelinePosition` に変換して Core へ渡す
+- typed な Mark failure の Editor 表示
+- shortcut routing / media time capture の unit test
 
 ## Phase 5: Export / Resume
 
 目的: 作業結果を保存し、後から再開できるようにする。
 
-### PR: Alignment export and resume
+### Next PR: Alignment export and resume
 
 実装内容:
 
