@@ -2,6 +2,7 @@ import { Result } from '@praha/byethrow'
 import { useRef, useState } from 'react'
 
 import {
+  adjustMark,
   getAlignment,
   getCurrentCue,
   getMark,
@@ -15,6 +16,7 @@ import {
   undo,
 } from '@mpppk/cue-align-core'
 import type {
+  AdjustMarkError,
   Alignment,
   AlignmentState,
   Cue,
@@ -66,6 +68,10 @@ export type AlignmentSessionController<TCue extends Cue> =
   AlignmentSessionSnapshot<TCue> & {
     markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
     mark: (cueId: CueId, at: TimelinePosition) => Result.Result<void, MarkError>
+    adjustMark: (
+      cueId: CueId,
+      at: TimelinePosition,
+    ) => Result.Result<void, AdjustMarkError>
     undo: () => boolean
     seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
     seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
@@ -100,6 +106,15 @@ export const useAlignmentSession = <TCue extends Cue>(
     },
     mark: (cueId, at) => {
       const result = mark(stateRef.current, cues, cueId, at)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      commit(result.value)
+      return Result.succeed(undefined)
+    },
+    adjustMark: (cueId, at) => {
+      const result = adjustMark(stateRef.current, cues, cueId, at)
       if (Result.isFailure(result)) {
         return Result.fail(result.error)
       }
