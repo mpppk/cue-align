@@ -11,6 +11,7 @@ import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueViewer } from './CueViewer'
 import { MediaPlayer, getMediaKind } from './MediaPlayer'
 import { Progress } from './Progress'
+import { ShortcutGuide } from './ShortcutGuide'
 
 type EditorProps = {
   authoring: AuthoringInput
@@ -46,6 +47,7 @@ function ReadyEditor({
   })
   const visibleError = shortcutError ?? exportError
   const mediaKind = getMediaKind(mediaFile)
+  const isComplete = session.totalCount > 0 && session.isComplete
 
   const handleExport = () => {
     const result = downloadAlignment(
@@ -68,6 +70,7 @@ function ReadyEditor({
           <h1 id="editor-title">
             {mediaKind === 'video' ? 'Video authoring' : 'Audio authoring'}
           </h1>
+          <p className="media-name">{mediaFile.name}</p>
         </div>
         <div className="editor-actions">
           <button
@@ -100,6 +103,13 @@ function ReadyEditor({
         </div>
       )}
 
+      {isComplete ? (
+        <div className="completion-message" role="status" aria-live="polite">
+          <strong>Alignment complete</strong>
+          <span>すべての Cue が Mark 済みです。結果を保存できます。</span>
+        </div>
+      ) : null}
+
       <CueViewer
         previousCue={session.previousCue}
         currentCue={session.currentCue}
@@ -112,9 +122,7 @@ function ReadyEditor({
         totalCount={session.totalCount}
       />
 
-      <p className="editor-note">
-        Space: Mark / Backspace: Undo / ←: Previous Cue / →: Next Cue
-      </p>
+      <ShortcutGuide />
     </section>
   )
 }
