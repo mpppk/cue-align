@@ -7,13 +7,13 @@
 ## Status
 
 - [x] Phase 1: Domain Core
-- [ ] Phase 2: Input Pipeline
-- [ ] Phase 3: Audio Authoring
+- [x] Phase 2: Input Pipeline
+- [x] Phase 3: Audio Authoring
 - [ ] Phase 4: Authoring Controls
 - [ ] Phase 5: Export / Resume
 - [ ] Phase 6: Video Support / v1 Polish
 
-現在は **Phase 1 完了、Phase 2 着手前**。
+現在は **Phase 3 完了、Phase 4 着手前**。
 
 ## Implementation principles
 
@@ -49,96 +49,60 @@ PR: #5 `feat: implement alignment domain model`
 
 ## Phase 2: Input Pipeline
 
+Status: **Done**
+
+PR: #12 `feat: add authoring input pipeline`
+
 目的: browser から入る JSON / File を Core が扱える型へ安全に変換する境界を作る。
 
-### Next PR: Authoring input pipeline
-
-想定タイトル:
-
-`feat: add authoring input pipeline`
-
-主な対象:
-
-```text
-src/features/alignment/
-  errors.ts
-  input.ts
-  input.test.ts
-```
-
-実装内容:
+完了済み:
 
 - Cue JSON の file read
 - optional Alignment JSON の file read
 - `JSON.parse()` の例外を typed error に変換
-- Cue JSON の structural validation
-- Alignment JSON の structural validation
+- Cue JSON / Alignment JSON の structural validation
 - JSON の primitive 値から branded type への変換
 - Core の alignment validation との接続
 - browser / file input 固有エラーと Core domain error の分離
-
-最低限の error model:
-
-- `InputReadError`
-- `InputParseError`
-- structural validation 用の input error
-- Core から返る domain error
-
-Acceptance criteria:
-
-- Cue JSON を `Result` / `ResultAsync` 経由で読み込める。
-- Alignment JSON を `Result` / `ResultAsync` 経由で読み込める。
-- invalid JSON が uncaught exception にならない。
-- malformed Cue / Alignment を明示的に拒否する。
-- Cue ID や timestamp の primitive 値は validation 境界を通過してから branded type になる。
-- browser/file 固有エラーが `src/core` に入らない。
-- file read、parse、validation の失敗経路がテストされている。
-
-この PR では UI を作り込まない。入力境界の API とテストに集中する。
+- file read、parse、validation の失敗経路のテスト
 
 ## Phase 3: Audio Authoring
 
+Status: **Done**
+
+PRs:
+
+- #13 `feat: add setup and local audio playback`
+- #14 `feat: integrate alignment session with React`
+
 目的: ローカル音声を読み込み、Reference app 上で再生できる最小の authoring workflow を作る。
 
-### PR: Setup and local audio playback
-
-実装内容:
+完了済み:
 
 - `/` の Setup UI
-- Cue JSON 選択
-- Audio file 選択
-- optional Alignment JSON 選択
+- Cue JSON / Audio file / optional Alignment JSON の選択
+- Phase 2 input pipeline と Setup UI の接続
 - `URL.createObjectURL()` による local audio playback
 - object URL cleanup
 - Setup から Editor への遷移
 - input pipeline error のユーザー向け表示
-
-Acceptance criteria:
-
-- サーバーへファイルを upload せず browser 内だけで動作する。
-- Cue JSON + audio file から Editor を開始できる。
-- optional Alignment を読み込んで Editor を開始できる。
-- 入力エラーを uncaught exception にせず画面へ表示できる。
-
-### PR: React integration for Alignment Session
-
-実装内容:
-
 - pure transition を利用する React state adapter / hook
 - Current Cue / previous / next の表示
-- mark 済み状態の表示
+- current Cue の mark 済み状態の表示
 - progress 表示
 - current playback time の表示
 
-注意:
-
-React state の current time は表示専用とし、Mark の source of truth には使わない。
+React state の current time は表示専用とし、Mark の source of truth には使用しない。
 
 ## Phase 4: Authoring Controls
 
 目的: 1パスの手動 alignment を実用可能にする。
 
-### PR: Keyboard authoring controls
+### Next PR: Keyboard authoring controls
+
+想定タイトル:
+
+`feat: add keyboard authoring controls`
 
 実装内容:
 

@@ -132,34 +132,67 @@ button:disabled {
   gap: 1rem;
 }
 
-.summary-grid {
+.media-player {
+  width: 100%;
+}
+
+.playback-time {
+  margin-bottom: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+
+.cue-viewer {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr 1.4fr 1fr;
   gap: 0.75rem;
-  margin: 0 0 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.summary-grid > div {
+.cue-card {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
   min-width: 0;
-  padding: 0.875rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
   border-radius: 0.75rem;
-  background: color-mix(in srgb, CanvasText 6%, transparent);
 }
 
-.summary-grid dt {
+.cue-card > span,
+.cue-card > small {
   font-size: 0.75rem;
   color: color-mix(in srgb, CanvasText 60%, transparent);
 }
 
-.summary-grid dd {
-  margin: 0.3rem 0 0;
-  overflow: hidden;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.cue-card > strong {
+  overflow-wrap: anywhere;
 }
 
-.media-player {
+.current-cue {
+  border-color: color-mix(in srgb, CanvasText 42%, transparent);
+  background: color-mix(in srgb, CanvasText 7%, transparent);
+}
+
+.secondary-cue {
+  opacity: 0.72;
+}
+
+.progress-block {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.progress-block progress {
   width: 100%;
 }
 
@@ -172,7 +205,7 @@ button:disabled {
     display: grid;
   }
 
-  .summary-grid {
+  .cue-viewer {
     grid-template-columns: 1fr;
   }
 }
