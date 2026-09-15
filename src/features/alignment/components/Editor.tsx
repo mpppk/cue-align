@@ -1,8 +1,13 @@
 import { Result } from '@praha/byethrow'
 import { useMemo, useRef, useState } from 'react'
 
-import { createAlignmentState } from '@mpppk/cue-align-core'
-import type { AlignmentState, CueId, SeekCueError } from '@mpppk/cue-align-core'
+import { asTimelinePosition, createAlignmentState } from '@mpppk/cue-align-core'
+import type {
+  AdjustMarkError,
+  AlignmentState,
+  CueId,
+  SeekCueError,
+} from '@mpppk/cue-align-core'
 import { useAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { downloadAlignment } from '../export'
@@ -24,6 +29,8 @@ type ReadyEditorProps = EditorProps & {
   initialState: AlignmentState
 }
 
+type WaveformEditError = SeekCueError | AdjustMarkError
+
 const formatPlaybackTime = (seconds: number): string => {
   const wholeMinutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds - wholeMinutes * 60
@@ -41,7 +48,7 @@ function ReadyEditor({
   const mediaRef = useRef<HTMLMediaElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [exportError, setExportError] = useState<AlignmentExportError>()
-  const [waveformError, setWaveformError] = useState<SeekCueError>()
+  const [waveformError, setWaveformError] = useState<WaveformEditError>()
   const session = useAlignmentSession(authoring.cues, initialState)
   const shortcutError = useAlignmentShortcuts({
     mediaRef,
@@ -86,6 +93,17 @@ function ReadyEditor({
     setWaveformError(undefined)
   }
 
+  const handleWaveformMarkAdjust = (cueId: CueId, at: number) => {
+    const result = session.adjustMark(cueId, asTimelinePosition(at))
+    if (Result.isFailure(result)) {
+      setWaveformError(result.error)
+      return
+    }
+
+    setWaveformError(undefined)
+    handleWaveformSeek(at)
+  }
+
   return (
     <section className="panel editor-panel" aria-labelledby="editor-title">
       <div className="editor-toolbar">
@@ -128,6 +146,7 @@ function ReadyEditor({
           currentTime={currentTime}
           onSeek={handleWaveformSeek}
           onSelectCue={handleWaveformCueSelect}
+          onAdjustMark={handleWaveformMarkAdjust}
         />
       ) : null}
 
