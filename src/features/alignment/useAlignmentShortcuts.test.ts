@@ -72,8 +72,7 @@ const createActions = () => {
 const editableTarget = (
   tagName: string,
   isContentEditable = false,
-): EventTarget =>
-  ({ tagName, isContentEditable }) as unknown as EventTarget
+): EventTarget => ({ tagName, isContentEditable }) as unknown as EventTarget
 
 describe('alignment keyboard shortcuts', () => {
   it('marks using the media currentTime read at the keyboard event', () => {
@@ -81,11 +80,7 @@ describe('alignment keyboard shortcuts', () => {
     const keyboard = createEvent({ code: 'Space' })
     const media = { currentTime: 12.345 }
 
-    const result = handleAlignmentShortcut(
-      keyboard.event,
-      media,
-      state.actions,
-    )
+    const result = handleAlignmentShortcut(keyboard.event, media, state.actions)
 
     expect(result).toBeSuccess((handled) => expect(handled).toBe(true))
     expect(state.getMarkedAt()).toBe(asTimelinePosition(12.345))
