@@ -30,18 +30,18 @@ describe('Remotion frame adapter', () => {
   })
 
   it('supports fractional frame rates without changing Core precision', () => {
-    expect(
-      timelinePositionToFrame(asTimelinePosition(10), 29.97),
-    ).toBeSuccess((frame) => expect(frame).toBe(300))
+    expect(timelinePositionToFrame(asTimelinePosition(10), 29.97)).toBeSuccess(
+      (frame) => expect(frame).toBe(300),
+    )
   })
 
   it('rejects invalid fps values', () => {
     for (const fps of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
-      expect(
-        timelinePositionToFrame(asTimelinePosition(1), fps),
-      ).toBeFailure((error) => {
-        expect(error).toBeInstanceOf(InvalidFramesPerSecondError)
-      })
+      expect(timelinePositionToFrame(asTimelinePosition(1), fps)).toBeFailure(
+        (error) => {
+          expect(error).toBeInstanceOf(InvalidFramesPerSecondError)
+        },
+      )
     }
   })
 
@@ -76,8 +76,10 @@ describe('Remotion frame adapter', () => {
   })
 
   it('returns a typed error for an unmarked Cue', () => {
-    expect(getCueFrameMark(alignment, asCueId('b'), 30)).toBeFailure((error) => {
-      expect(error).toBeInstanceOf(MissingMarkError)
-    })
+    expect(getCueFrameMark(alignment, asCueId('b'), 30)).toBeFailure(
+      (error) => {
+        expect(error).toBeInstanceOf(MissingMarkError)
+      },
+    )
   })
 })
