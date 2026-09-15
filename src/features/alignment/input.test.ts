@@ -46,9 +46,9 @@ describe('authoring input pipeline', () => {
     expectTypeOf(readCueFile(textFile('[]'))).toEqualTypeOf<
       Result.ResultAsync<ReadonlyArray<ReferenceCue>, ReadCueFileError>
     >()
-    expectTypeOf(parseAlignmentJson(cues, '{"version":1,"marks":[]}')).toEqualTypeOf<
-      Result.Result<Alignment, ParseAlignmentJsonError>
-    >()
+    expectTypeOf(
+      parseAlignmentJson(cues, '{"version":1,"marks":[]}'),
+    ).toEqualTypeOf<Result.Result<Alignment, ParseAlignmentJsonError>>()
     expectTypeOf(
       readAlignmentFile(cues, textFile('{"version":1,"marks":[]}')),
     ).toEqualTypeOf<Result.ResultAsync<Alignment, ReadAlignmentFileError>>()
@@ -164,7 +164,7 @@ describe('authoring input pipeline', () => {
     })
   })
 
-  it('converts file read rejection to InputReadError and preserves cause', async () => {
+  it('preserves file read errors and causes', async () => {
     const cause = new Error('read failed')
     const file: TextFile = {
       text: () => Promise.reject(cause),
@@ -181,7 +181,7 @@ describe('authoring input pipeline', () => {
     })
   })
 
-  it('reads and parses Alignment files through the same pipeline', async () => {
+  it('reads Alignment files through the pipeline', async () => {
     const result = await readAlignmentFile(
       cues,
       textFile('{"version":1,"marks":[{"cueId":"a","at":1}]}'),
