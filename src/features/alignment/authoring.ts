@@ -10,9 +10,7 @@ export type AuthoringInput = {
   alignment?: Alignment
 }
 
-export type ReadAuthoringInputError =
-  | ReadCueFileError
-  | ReadAlignmentFileError
+export type ReadAuthoringInputError = ReadCueFileError | ReadAlignmentFileError
 
 export const readAuthoringInput = (
   cueFile: TextFile,
