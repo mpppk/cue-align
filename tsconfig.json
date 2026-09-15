@@ -15,7 +15,8 @@
       "#/*": ["./src/*"],
       "@/*": ["./src/*"],
       "@mpppk/cue-align-core": ["./packages/core/src/index.ts"],
-      "@mpppk/cue-align-react": ["./packages/react/src/index.ts"]
+      "@mpppk/cue-align-react": ["./packages/react/src/index.ts"],
+      "@mpppk/cue-align-remotion": ["./packages/remotion/src/index.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
