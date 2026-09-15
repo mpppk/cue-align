@@ -24,7 +24,9 @@ export const getCueMetadataEntries = (
     .filter(
       ([key, value]) => key !== 'id' && key !== 'label' && value !== undefined,
     )
-    .map(([key, value]) => [key, formatMetadataValue(value as JsonValue)] as const)
+    .map(
+      ([key, value]) => [key, formatMetadataValue(value as JsonValue)] as const,
+    )
 }
 
 export function CueViewer({
@@ -56,7 +58,9 @@ export function CueViewer({
       <div className="cue-card current-cue">
         <span>Current</span>
         <strong>{cueLabel(currentCue)}</strong>
-        {currentCue?.label === undefined ? null : <small>ID: {currentCue.id}</small>}
+        {currentCue?.label === undefined ? null : (
+          <small>ID: {currentCue.id}</small>
+        )}
         <small className={isCurrentMarked ? 'marked-status' : undefined}>
           {isCurrentMarked ? 'Marked' : 'Not marked'}
         </small>
