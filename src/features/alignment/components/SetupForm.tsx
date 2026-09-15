@@ -1,6 +1,6 @@
 import { Result } from '@praha/byethrow'
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 
 import { readAuthoringInput } from '../authoring'
 import type { AuthoringInput, ReadAuthoringInputError } from '../authoring'
@@ -13,6 +13,27 @@ export type SetupSelection = {
 
 type SetupFormProps = {
   onStart: (selection: SetupSelection) => void
+}
+
+type FileFieldProps = {
+  label: string
+  hint: string
+  accept: string
+  onChange: (file: File | undefined) => void
+}
+
+function FileField({ label, hint, accept, onChange }: FileFieldProps) {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange(event.currentTarget.files?.[0])
+  }
+
+  return (
+    <label className="file-field">
+      <span>{label}</span>
+      <small>{hint}</small>
+      <input type="file" accept={accept} onChange={handleChange} />
+    </label>
+  )
 }
 
 const formatInputError = (error: ReadAuthoringInputError): string => {
@@ -61,44 +82,28 @@ export function SetupForm({ onStart }: SetupFormProps) {
       <div className="section-heading">
         <p className="eyebrow">Reference authoring tool</p>
         <h1 id="setup-title">Cue sequence を音声へ合わせる</h1>
-        <p>
-          Cue JSON とローカル音声を選択してください。ファイルはブラウザ内だけで扱い、
-          サーバーには送信しません。
-        </p>
+        <p>選択したファイルはブラウザ内だけで扱います。</p>
       </div>
 
       <form className="setup-form" onSubmit={handleSubmit}>
-        <label className="file-field">
-          <span>Cue JSON</span>
-          <small>必須</small>
-          <input
-            type="file"
-            accept="application/json,.json"
-            onChange={(event) => setCueFile(event.currentTarget.files?.[0])}
-          />
-        </label>
-
-        <label className="file-field">
-          <span>Audio file</span>
-          <small>必須</small>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={(event) => setAudioFile(event.currentTarget.files?.[0])}
-          />
-        </label>
-
-        <label className="file-field">
-          <span>Alignment JSON</span>
-          <small>任意・作業再開用</small>
-          <input
-            type="file"
-            accept="application/json,.json"
-            onChange={(event) => {
-              setAlignmentFile(event.currentTarget.files?.[0])
-            }}
-          />
-        </label>
+        <FileField
+          label="Cue JSON"
+          hint="必須"
+          accept="application/json,.json"
+          onChange={setCueFile}
+        />
+        <FileField
+          label="Audio file"
+          hint="必須"
+          accept="audio/*"
+          onChange={setAudioFile}
+        />
+        <FileField
+          label="Alignment JSON"
+          hint="任意・作業再開用"
+          accept="application/json,.json"
+          onChange={setAlignmentFile}
+        />
 
         {error === undefined ? null : (
           <div className="error-message" role="alert">
