@@ -12,7 +12,9 @@ describe('getMediaKind', () => {
   })
 
   it('defaults to audio for audio and unknown files', () => {
-    expect(getMediaKind({ name: 'track.mp3', type: 'audio/mpeg' })).toBe('audio')
+    expect(getMediaKind({ name: 'track.mp3', type: 'audio/mpeg' })).toBe(
+      'audio',
+    )
     expect(getMediaKind({ name: 'track.bin', type: '' })).toBe('audio')
   })
 })
