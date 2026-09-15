@@ -26,7 +26,7 @@ import type {
 
 export type JsonPrimitive = null | boolean | number | string
 export type JsonValue = JsonPrimitive | JsonObject | Array<JsonValue>
-export type JsonObject = { [key: string]: JsonValue }
+export type JsonObject = { [key: string]: JsonValue | undefined }
 
 export type ReferenceCue = Cue & {
   label?: string
@@ -100,7 +100,7 @@ export const parseCueInput = (
       )
     }
 
-    cues.push({ ...rawCue, id: asCueId(id) } as ReferenceCue)
+    cues.push({ ...rawCue, id: asCueId(id) })
   }
 
   return Result.pipe(
