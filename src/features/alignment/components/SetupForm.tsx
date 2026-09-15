@@ -1,7 +1,7 @@
 import { Result } from '@praha/byethrow'
 import { useState } from 'react'
-
 import type { FormEvent } from 'react'
+
 import { readAuthoringInput } from '../authoring'
 import type { AuthoringInput, ReadAuthoringInputError } from '../authoring'
 import { InvalidAlignmentInputError, InvalidCueInputError } from '../errors'
@@ -32,6 +32,7 @@ export function SetupForm({ onStart }: SetupFormProps) {
   const [alignmentFile, setAlignmentFile] = useState<File>()
   const [error, setError] = useState<ReadAuthoringInputError>()
   const [isLoading, setIsLoading] = useState(false)
+  const canStart = cueFile !== undefined && audioFile !== undefined && !isLoading
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -92,9 +93,9 @@ export function SetupForm({ onStart }: SetupFormProps) {
           <input
             type="file"
             accept="application/json,.json"
-            onChange={(event) =>
+            onChange={(event) => {
               setAlignmentFile(event.currentTarget.files?.[0])
-            }
+            }}
           />
         </label>
 
@@ -108,9 +109,7 @@ export function SetupForm({ onStart }: SetupFormProps) {
         <button
           className="primary-button"
           type="submit"
-          disabled={
-            cueFile === undefined || audioFile === undefined || isLoading
-          }
+          disabled={!canStart}
         >
           {isLoading ? '読み込み中…' : 'Editor を開く'}
         </button>
