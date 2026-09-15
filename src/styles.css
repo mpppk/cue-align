@@ -175,6 +175,132 @@ video.media-player {
   letter-spacing: -0.04em;
 }
 
+.waveform-review {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.waveform-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.waveform-heading span,
+.waveform-help {
+  color: color-mix(in srgb, CanvasText 62%, transparent);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.waveform-surface {
+  position: relative;
+  height: 8rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, CanvasText 4%, transparent);
+  cursor: crosshair;
+}
+
+.waveform-surface:focus-visible {
+  outline: 2px solid CanvasText;
+  outline-offset: 2px;
+}
+
+.waveform-bars {
+  position: absolute;
+  inset: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.waveform-peak {
+  flex: 1 1 0;
+  min-width: 1px;
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 42%, transparent);
+}
+
+.waveform-mark {
+  position: absolute;
+  z-index: 2;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 0.75rem;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 0;
+  background: transparent;
+}
+
+.waveform-mark::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 60%, transparent);
+  content: '';
+}
+
+.waveform-mark:hover::before,
+.waveform-mark:focus-visible::before,
+.current-waveform-mark::before {
+  width: 4px;
+  background: CanvasText;
+}
+
+.waveform-playhead {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: CanvasText;
+  pointer-events: none;
+}
+
+.waveform-playhead::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-right: 0.35rem solid transparent;
+  border-left: 0.35rem solid transparent;
+  border-top: 0.45rem solid CanvasText;
+  content: '';
+}
+
+.waveform-status {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 5rem;
+  place-content: center;
+  padding: 1rem;
+  border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent);
+  border-radius: 0.75rem;
+  color: color-mix(in srgb, CanvasText 65%, transparent);
+  text-align: center;
+}
+
+.waveform-error {
+  border-style: solid;
+}
+
+.waveform-help {
+  margin: 0;
+}
+
 .cue-viewer {
   display: grid;
   grid-template-columns: 1fr 1.4fr 1fr;
@@ -310,6 +436,11 @@ video.media-player {
 
   .editor-actions {
     justify-content: flex-start;
+  }
+
+  .waveform-heading {
+    display: grid;
+    gap: 0.25rem;
   }
 
   .cue-viewer {

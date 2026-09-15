@@ -2,7 +2,7 @@ import { Result } from '@praha/byethrow'
 import { useMemo, useRef, useState } from 'react'
 
 import { createAlignmentState } from '@mpppk/cue-align-core'
-import type { AlignmentState } from '@mpppk/cue-align-core'
+import type { AlignmentState, CueId, SeekCueError } from '@mpppk/cue-align-core'
 import { useAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { downloadAlignment } from '../export'
@@ -12,6 +12,7 @@ import { CueViewer } from './CueViewer'
 import { MediaPlayer, getMediaKind } from './MediaPlayer'
 import { Progress } from './Progress'
 import { ShortcutGuide } from './ShortcutGuide'
+import { WaveformReview } from './WaveformReview'
 
 type EditorProps = {
   authoring: AuthoringInput
@@ -40,12 +41,13 @@ function ReadyEditor({
   const mediaRef = useRef<HTMLMediaElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [exportError, setExportError] = useState<AlignmentExportError>()
+  const [waveformError, setWaveformError] = useState<SeekCueError>()
   const session = useAlignmentSession(authoring.cues, initialState)
   const shortcutError = useAlignmentShortcuts({
     mediaRef,
     actions: session,
   })
-  const visibleError = shortcutError ?? exportError
+  const visibleError = shortcutError ?? waveformError ?? exportError
   const mediaKind = getMediaKind(mediaFile)
   const isComplete = session.totalCount > 0 && session.isComplete
 
@@ -60,6 +62,28 @@ function ReadyEditor({
     }
 
     setExportError(undefined)
+  }
+
+  const handleWaveformSeek = (at: number) => {
+    const media = mediaRef.current
+    if (media === null) {
+      return
+    }
+
+    const duration = Number.isFinite(media.duration) ? media.duration : at
+    const nextTime = Math.min(duration, Math.max(0, at))
+    media.currentTime = nextTime
+    setCurrentTime(nextTime)
+  }
+
+  const handleWaveformCueSelect = (cueId: CueId) => {
+    const result = session.seekCue(cueId)
+    if (Result.isFailure(result)) {
+      setWaveformError(result.error)
+      return
+    }
+
+    setWaveformError(undefined)
   }
 
   return (
@@ -95,6 +119,17 @@ function ReadyEditor({
         mediaRef={mediaRef}
         onTimeChange={setCurrentTime}
       />
+
+      {mediaKind === 'audio' ? (
+        <WaveformReview
+          file={mediaFile}
+          alignment={session.alignment}
+          currentCueId={session.currentCue?.id}
+          currentTime={currentTime}
+          onSeek={handleWaveformSeek}
+          onSelectCue={handleWaveformCueSelect}
+        />
+      ) : null}
 
       {visibleError === undefined ? null : (
         <div className="error-message" role="alert">
