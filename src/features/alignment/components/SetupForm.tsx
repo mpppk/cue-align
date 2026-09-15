@@ -32,7 +32,8 @@ export function SetupForm({ onStart }: SetupFormProps) {
   const [alignmentFile, setAlignmentFile] = useState<File>()
   const [error, setError] = useState<ReadAuthoringInputError>()
   const [isLoading, setIsLoading] = useState(false)
-  const canStart = cueFile !== undefined && audioFile !== undefined && !isLoading
+  const canStart =
+    cueFile !== undefined && audioFile !== undefined && !isLoading
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
