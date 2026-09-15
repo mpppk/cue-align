@@ -146,7 +146,8 @@ export function WaveformReview({
       </div>
 
       <p className="waveform-help">
-        波形をクリックして seek。Mark をクリックすると対応する Cue を選択します。
+        波形をクリックして seek。Mark をクリックすると対応する Cue
+        を選択します。
       </p>
     </section>
   )
