@@ -10,15 +10,19 @@ import {
 
 describe('waveform helpers', () => {
   it('downsamples decoded channels into absolute peak amplitudes', () => {
-    expect(
-      createWaveformPeaks(
-        [
-          new Float32Array([0, 0.5, -1, 0.25]),
-          new Float32Array([0.2, -0.25, 0.75, -0.5]),
-        ],
-        4,
-      ),
-    ).toEqual([0.2, 0.5, 1, 0.5])
+    const peaks = createWaveformPeaks(
+      [
+        new Float32Array([0, 0.5, -1, 0.25]),
+        new Float32Array([0.2, -0.25, 0.75, -0.5]),
+      ],
+      4,
+    )
+
+    expect(peaks).toHaveLength(4)
+    expect(peaks[0]).toBeCloseTo(0.2)
+    expect(peaks[1]).toBeCloseTo(0.5)
+    expect(peaks[2]).toBeCloseTo(1)
+    expect(peaks[3]).toBeCloseTo(0.5)
   })
 
   it('returns a stable silent waveform for empty decoded audio', () => {
