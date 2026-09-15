@@ -2,11 +2,7 @@ import { Result } from '@praha/byethrow'
 import { useMemo, useRef, useState } from 'react'
 
 import { createAlignmentState } from '@mpppk/cue-align-core'
-import type {
-  AlignmentState,
-  CueId,
-  SeekCueError,
-} from '@mpppk/cue-align-core'
+import type { AlignmentState, CueId, SeekCueError } from '@mpppk/cue-align-core'
 import { useAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { downloadAlignment } from '../export'
