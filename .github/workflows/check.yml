@@ -15,6 +15,7 @@ jobs:
           node-version: '24'
           cache: true
       - run: vp install
-      - run: vp check
-      - run: vp test
-      - run: vp build
+      - run: |
+          vp fmt src/features/alignment/components/CueViewer.tsx
+          git diff -- src/features/alignment/components/CueViewer.tsx
+          exit 1
