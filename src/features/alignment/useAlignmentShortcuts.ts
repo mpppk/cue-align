@@ -107,7 +107,7 @@ export const handleAlignmentShortcut = (
 }
 
 type UseAlignmentShortcutsOptions = {
-  mediaRef: RefObject<HTMLAudioElement | null>
+  mediaRef: RefObject<HTMLMediaElement | null>
   actions: AlignmentShortcutActions
 }
 
