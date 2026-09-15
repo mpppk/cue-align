@@ -67,7 +67,11 @@ function ReadyEditor({
           <h1 id="editor-title">Audio authoring</h1>
         </div>
         <div className="editor-actions">
-          <button className="secondary-button" type="button" onClick={handleExport}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleExport}
+          >
             Alignment を保存
           </button>
           <button className="secondary-button" type="button" onClick={onBack}>
