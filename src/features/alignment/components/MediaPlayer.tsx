@@ -4,9 +4,7 @@ import { useLocalMediaUrl } from '../useMedia'
 
 export type MediaKind = 'audio' | 'video'
 
-export const getMediaKind = (
-  file: Pick<File, 'name' | 'type'>,
-): MediaKind => {
+export const getMediaKind = (file: Pick<File, 'name' | 'type'>): MediaKind => {
   if (
     file.type.startsWith('video/') ||
     /\.(mp4|m4v|mov|webm|ogv)$/i.test(file.name)
