@@ -4,7 +4,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "paths": {
-      "@mpppk/cue-align-core": ["../core/src/index.ts"]
+      "@mpppk/cue-align-core": ["../core/dist/index.d.mts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
