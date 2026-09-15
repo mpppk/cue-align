@@ -55,10 +55,16 @@ button:disabled {
 }
 
 .section-heading p:last-child,
-.editor-note {
+.editor-note,
+.media-name {
   margin-bottom: 0;
   color: color-mix(in srgb, CanvasText 68%, transparent);
   line-height: 1.65;
+}
+
+.media-name {
+  margin-top: 0;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -97,12 +103,24 @@ button:disabled {
   margin-top: 0.5rem;
 }
 
-.error-message {
+.error-message,
+.completion-message,
+.empty-state {
   display: grid;
   gap: 0.25rem;
+  margin-top: 1rem;
   padding: 0.875rem 1rem;
   border: 1px solid currentColor;
   border-radius: 0.75rem;
+}
+
+.completion-message {
+  border-color: color-mix(in srgb, CanvasText 35%, transparent);
+  background: color-mix(in srgb, CanvasText 6%, transparent);
+}
+
+.empty-state {
+  color: color-mix(in srgb, CanvasText 68%, transparent);
 }
 
 .primary-button,
@@ -132,8 +150,21 @@ button:disabled {
   gap: 1rem;
 }
 
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .media-player {
   width: 100%;
+}
+
+video.media-player {
+  max-height: 28rem;
+  background: #000;
+  object-fit: contain;
 }
 
 .playback-time {
@@ -176,8 +207,39 @@ button:disabled {
   background: color-mix(in srgb, CanvasText 7%, transparent);
 }
 
+.current-cue > strong {
+  font-size: 1.15rem;
+}
+
 .secondary-cue {
   opacity: 0.72;
+}
+
+.marked-status {
+  font-weight: 700;
+}
+
+.cue-metadata {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.cue-metadata > div {
+  display: grid;
+  grid-template-columns: minmax(4rem, auto) 1fr;
+  gap: 0.5rem;
+}
+
+.cue-metadata dt {
+  color: color-mix(in srgb, CanvasText 58%, transparent);
+}
+
+.cue-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .progress-block {
@@ -196,6 +258,47 @@ button:disabled {
   width: 100%;
 }
 
+.shortcut-guide {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.shortcut-guide dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+}
+
+.shortcut-guide dl > div {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.shortcut-guide dt,
+.shortcut-guide dd {
+  margin: 0;
+}
+
+.shortcut-guide kbd {
+  display: inline-block;
+  min-width: 2.25rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid color-mix(in srgb, CanvasText 24%, transparent);
+  border-radius: 0.35rem;
+  text-align: center;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.shortcut-guide dd {
+  color: color-mix(in srgb, CanvasText 68%, transparent);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 36rem) {
   .app-shell {
     padding: 1rem 0;
@@ -203,6 +306,10 @@ button:disabled {
 
   .editor-toolbar {
     display: grid;
+  }
+
+  .editor-actions {
+    justify-content: flex-start;
   }
 
   .cue-viewer {
