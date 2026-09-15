@@ -8,9 +8,7 @@ import type { MarkCurrentError, TimelinePosition } from '#/core'
 type AlignmentShortcut = 'mark-current' | 'undo' | 'previous-cue' | 'next-cue'
 
 export type AlignmentShortcutActions = {
-  markCurrent: (
-    at: TimelinePosition,
-  ) => Result.Result<void, MarkCurrentError>
+  markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
   undo: () => boolean
   goToPreviousCue: () => void
   goToNextCue: () => void
@@ -89,9 +87,7 @@ export const handleAlignmentShortcut = (
         return Result.succeed(false)
       }
 
-      const result = actions.markCurrent(
-        asTimelinePosition(media.currentTime),
-      )
+      const result = actions.markCurrent(asTimelinePosition(media.currentTime))
       if (Result.isFailure(result)) {
         return Result.fail(result.error)
       }
