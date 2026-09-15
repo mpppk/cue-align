@@ -9,12 +9,12 @@ import type { AlignmentExportError } from '../export'
 import { useAlignmentSession } from '../useAlignmentSession'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueViewer } from './CueViewer'
-import { MediaPlayer } from './MediaPlayer'
+import { MediaPlayer, getMediaKind } from './MediaPlayer'
 import { Progress } from './Progress'
 
 type EditorProps = {
   authoring: AuthoringInput
-  audioFile: File
+  mediaFile: File
   onBack: () => void
 }
 
@@ -32,24 +32,25 @@ const formatPlaybackTime = (seconds: number): string => {
 
 function ReadyEditor({
   authoring,
-  audioFile,
+  mediaFile,
   onBack,
   initialState,
 }: ReadyEditorProps) {
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const mediaRef = useRef<HTMLMediaElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [exportError, setExportError] = useState<AlignmentExportError>()
   const session = useAlignmentSession(authoring.cues, initialState)
   const shortcutError = useAlignmentShortcuts({
-    mediaRef: audioRef,
+    mediaRef,
     actions: session,
   })
   const visibleError = shortcutError ?? exportError
+  const mediaKind = getMediaKind(mediaFile)
 
   const handleExport = () => {
     const result = downloadAlignment(
       session.alignment,
-      `${audioFile.name}.alignment.json`,
+      `${mediaFile.name}.alignment.json`,
     )
     if (Result.isFailure(result)) {
       setExportError(result.error)
@@ -64,7 +65,9 @@ function ReadyEditor({
       <div className="editor-toolbar">
         <div>
           <p className="eyebrow">Editor</p>
-          <h1 id="editor-title">Audio authoring</h1>
+          <h1 id="editor-title">
+            {mediaKind === 'video' ? 'Video authoring' : 'Audio authoring'}
+          </h1>
         </div>
         <div className="editor-actions">
           <button
@@ -85,8 +88,8 @@ function ReadyEditor({
       </div>
 
       <MediaPlayer
-        file={audioFile}
-        mediaRef={audioRef}
+        file={mediaFile}
+        mediaRef={mediaRef}
         onTimeChange={setCurrentTime}
       />
 
@@ -116,7 +119,7 @@ function ReadyEditor({
   )
 }
 
-export function Editor({ authoring, audioFile, onBack }: EditorProps) {
+export function Editor({ authoring, mediaFile, onBack }: EditorProps) {
   const initialStateResult = useMemo(
     () =>
       createAlignmentState({
@@ -143,7 +146,7 @@ export function Editor({ authoring, audioFile, onBack }: EditorProps) {
   return (
     <ReadyEditor
       authoring={authoring}
-      audioFile={audioFile}
+      mediaFile={mediaFile}
       onBack={onBack}
       initialState={initialStateResult.value}
     />
