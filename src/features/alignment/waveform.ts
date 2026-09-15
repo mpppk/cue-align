@@ -74,7 +74,11 @@ export const createWaveformPeaks = (
 
     for (const channel of channels) {
       const channelEnd = Math.min(end, channel.length)
-      for (let sampleIndex = start; sampleIndex < channelEnd; sampleIndex += 1) {
+      for (
+        let sampleIndex = start;
+        sampleIndex < channelEnd;
+        sampleIndex += 1
+      ) {
         peak = Math.max(peak, Math.abs(channel[sampleIndex] ?? 0))
       }
     }
