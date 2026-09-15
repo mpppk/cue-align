@@ -10,10 +10,10 @@
 - [x] Phase 2: Input Pipeline
 - [x] Phase 3: Audio Authoring
 - [x] Phase 4: Authoring Controls
-- [ ] Phase 5: Export / Resume
+- [x] Phase 5: Export / Resume
 - [ ] Phase 6: Video Support / v1 Polish
 
-現在は **Phase 4 完了、Phase 5 着手前**。
+現在は **Phase 5 完了、Phase 6 着手前**。
 
 ## Implementation principles
 
@@ -117,31 +117,27 @@ PR: #15 `feat: add keyboard authoring controls`
 
 ## Phase 5: Export / Resume
 
+Status: **Done**
+
+PR: #16 `feat: add alignment export and resume`
+
 目的: 作業結果を保存し、後から再開できるようにする。
 
-### Next PR: Alignment export and resume
+完了済み:
 
-実装内容:
+- partial / complete Alignment の canonical JSON serialization
+- deterministic な Cue order を保持した download
+- export failure の typed Result 化
+- export 済み Alignment の既存 import pipeline への round-trip test
+- imported Alignment に対する既存 navigation + mark による re-mark
 
-- partial Alignment の JSON export
-- complete Alignment の JSON export
-- deterministic な Cue order での export
-- export 済み Alignment の再 import
-- re-mark による既存 Mark 修正
-
-Acceptance criteria:
-
-- 作業途中でも export できる。
-- export → reload → import で同じ Alignment から再開できる。
-- invalid Alignment は silent correction せず明示的に拒否する。
-
-この時点で Audio を利用した v1 の主要 workflow は end-to-end で成立する。
+Audio を利用した v1 の主要 workflow はこの時点で end-to-end で成立する。
 
 ## Phase 6: Video Support / v1 Polish
 
 目的: Audio で確立した workflow を Video に拡張し、v1 として最低限の使い勝手を整える。
 
-### PR: Local video support
+### Next PR: Local video support
 
 - `<video>` で local file を再生
 - Audio と同じ `HTMLMediaElement` ベースの clock handling を再利用

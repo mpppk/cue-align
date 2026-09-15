@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from 'react'
 import { createAlignmentState } from '#/core'
 import type { AlignmentState } from '#/core'
 import type { AuthoringInput } from '../authoring'
+import { downloadAlignment } from '../export'
+import type { AlignmentExportError } from '../export'
 import { useAlignmentSession } from '../useAlignmentSession'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueViewer } from './CueViewer'
@@ -36,11 +38,26 @@ function ReadyEditor({
 }: ReadyEditorProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
+  const [exportError, setExportError] = useState<AlignmentExportError>()
   const session = useAlignmentSession(authoring.cues, initialState)
   const shortcutError = useAlignmentShortcuts({
     mediaRef: audioRef,
     actions: session,
   })
+  const visibleError = shortcutError ?? exportError
+
+  const handleExport = () => {
+    const result = downloadAlignment(
+      session.alignment,
+      `${audioFile.name}.alignment.json`,
+    )
+    if (Result.isFailure(result)) {
+      setExportError(result.error)
+      return
+    }
+
+    setExportError(undefined)
+  }
 
   return (
     <section className="panel editor-panel" aria-labelledby="editor-title">
@@ -49,9 +66,18 @@ function ReadyEditor({
           <p className="eyebrow">Editor</p>
           <h1 id="editor-title">Audio authoring</h1>
         </div>
-        <button className="secondary-button" type="button" onClick={onBack}>
-          Setup に戻る
-        </button>
+        <div className="editor-actions">
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleExport}
+          >
+            Alignment を保存
+          </button>
+          <button className="secondary-button" type="button" onClick={onBack}>
+            Setup に戻る
+          </button>
+        </div>
       </div>
 
       <div className="playback-time" aria-label="Current playback time">
@@ -64,10 +90,10 @@ function ReadyEditor({
         onTimeChange={setCurrentTime}
       />
 
-      {shortcutError === undefined ? null : (
+      {visibleError === undefined ? null : (
         <div className="error-message" role="alert">
-          <strong>{shortcutError.name}</strong>
-          <span>{shortcutError.message}</span>
+          <strong>{visibleError.name}</strong>
+          <span>{visibleError.message}</span>
         </div>
       )}
 
