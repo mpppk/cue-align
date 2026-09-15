@@ -2,12 +2,177 @@
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
+:root {
+  color-scheme: light dark;
   font-family: system-ui, sans-serif;
+  background: Canvas;
+  color: CanvasText;
 }
 
-main {
-  width: min(42rem, calc(100% - 2rem));
-  margin: 4rem auto;
+body {
+  margin: 0;
+  min-width: 20rem;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.app-shell {
+  width: min(48rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 4rem 0;
+}
+
+.panel {
+  border: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+  border-radius: 1rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+}
+
+.section-heading,
+.editor-toolbar {
+  margin-bottom: 2rem;
+}
+
+.section-heading h1,
+.editor-toolbar h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.section-heading p:last-child,
+.editor-note {
+  margin-bottom: 0;
+  color: color-mix(in srgb, CanvasText 68%, transparent);
+  line-height: 1.65;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, CanvasText 60%, transparent);
+}
+
+.setup-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.file-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 0.75rem;
+}
+
+.file-field > span {
+  font-weight: 650;
+}
+
+.file-field > small {
+  color: color-mix(in srgb, CanvasText 55%, transparent);
+}
+
+.file-field input {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+
+.error-message {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.75rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 2.75rem;
+  border-radius: 0.7rem;
+  padding: 0.65rem 1rem;
+}
+
+.primary-button {
+  border: 0;
+  background: CanvasText;
+  color: Canvas;
+  font-weight: 700;
+}
+
+.secondary-button {
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  background: transparent;
+  color: inherit;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.summary-grid > div {
+  min-width: 0;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, CanvasText 6%, transparent);
+}
+
+.summary-grid dt {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, CanvasText 60%, transparent);
+}
+
+.summary-grid dd {
+  margin: 0.3rem 0 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-player {
+  width: 100%;
+}
+
+@media (max-width: 36rem) {
+  .app-shell {
+    padding: 1rem 0;
+  }
+
+  .editor-toolbar {
+    display: grid;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
