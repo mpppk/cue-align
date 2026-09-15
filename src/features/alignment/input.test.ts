@@ -1,6 +1,6 @@
-import { Result } from '@praha/byethrow'
 import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
+import type { Result } from '@praha/byethrow'
 import {
   DuplicateCueIdError,
   InvalidTimeError,
