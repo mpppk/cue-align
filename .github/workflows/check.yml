@@ -15,9 +15,6 @@ jobs:
           node-version: '24'
           cache: true
       - run: vp install
-      - run: |
-          vp fmt src/features/alignment/useAlignmentShortcuts.ts
-          vp fmt src/features/alignment/useAlignmentShortcuts.test.ts
-          git diff -- src/features/alignment/useAlignmentShortcuts.ts
-          git diff -- src/features/alignment/useAlignmentShortcuts.test.ts
-          exit 1
+      - run: vp check
+      - run: vp test
+      - run: vp build
