@@ -6,12 +6,15 @@ import {
   asTimelinePosition,
   createAlignmentState,
 } from '@mpppk/cue-align-core'
-import type { AlignmentState } from '@mpppk/cue-align-core'
-import type { ReferenceCue } from './input'
+import type { AlignmentState, Cue } from '@mpppk/cue-align-core'
 import { getAlignmentSessionSnapshot } from './useAlignmentSession'
 import type { AlignmentSessionSnapshot } from './useAlignmentSession'
 
-const cues: ReadonlyArray<ReferenceCue> = [
+type TestCue = Cue & {
+  label: string
+}
+
+const cues: ReadonlyArray<TestCue> = [
   { id: asCueId('a'), label: 'Alpha' },
   { id: asCueId('b'), label: 'Beta' },
   { id: asCueId('c'), label: 'Gamma' },
@@ -49,9 +52,7 @@ describe('getAlignmentSessionSnapshot', () => {
     }
     const snapshot = getAlignmentSessionSnapshot(state, cues)
 
-    expectTypeOf(snapshot).toEqualTypeOf<
-      AlignmentSessionSnapshot<ReferenceCue>
-    >()
+    expectTypeOf(snapshot).toEqualTypeOf<AlignmentSessionSnapshot<TestCue>>()
     expectTypeOf(snapshot.currentCue?.label).toEqualTypeOf<string | undefined>()
   })
 })
