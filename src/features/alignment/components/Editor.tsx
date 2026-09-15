@@ -5,6 +5,7 @@ import { createAlignmentState } from '#/core'
 import type { AlignmentState } from '#/core'
 import type { AuthoringInput } from '../authoring'
 import { useAlignmentSession } from '../useAlignmentSession'
+import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueViewer } from './CueViewer'
 import { MediaPlayer } from './MediaPlayer'
 import { Progress } from './Progress'
@@ -36,6 +37,10 @@ function ReadyEditor({
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const session = useAlignmentSession(authoring.cues, initialState)
+  const shortcutError = useAlignmentShortcuts({
+    mediaRef: audioRef,
+    actions: session,
+  })
 
   return (
     <section className="panel editor-panel" aria-labelledby="editor-title">
@@ -59,6 +64,13 @@ function ReadyEditor({
         onTimeChange={setCurrentTime}
       />
 
+      {shortcutError === undefined ? null : (
+        <div className="error-message" role="alert">
+          <strong>{shortcutError.name}</strong>
+          <span>{shortcutError.message}</span>
+        </div>
+      )}
+
       <CueViewer
         previousCue={session.previousCue}
         currentCue={session.currentCue}
@@ -72,7 +84,7 @@ function ReadyEditor({
       />
 
       <p className="editor-note">
-        再生時刻は表示専用です。Mark 操作は次の Phase 4 で追加します。
+        Space: Mark / Backspace: Undo / ←: Previous Cue / →: Next Cue
       </p>
     </section>
   )
