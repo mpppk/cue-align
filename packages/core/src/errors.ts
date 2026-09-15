@@ -20,6 +20,12 @@ export class UnknownCueIdError extends ErrorFactory({
   fields: ErrorFactory.fields<{ cueId: CueId }>(),
 }) {}
 
+export class CueNotMarkedError extends ErrorFactory({
+  name: 'CueNotMarkedError',
+  message: 'Cue must already have a Mark before it can be adjusted',
+  fields: ErrorFactory.fields<{ cueId: CueId }>(),
+}) {}
+
 export class DuplicateMarkError extends ErrorFactory({
   name: 'DuplicateMarkError',
   message: 'Alignment must not contain duplicate marks for a cue',
@@ -77,6 +83,12 @@ export type MarkError =
   | InvalidTimeError
   | NonMonotonicTimeError
 
+export type AdjustMarkError =
+  | UnknownCueIdError
+  | CueNotMarkedError
+  | InvalidTimeError
+  | NonMonotonicTimeError
+
 export type SeekCueError = UnknownCueIdError
 export type SeekIndexError = InvalidCueIndexError
 
@@ -85,6 +97,7 @@ export type AlignmentError =
   | EmptyCueIdError
   | DuplicateCueIdError
   | UnknownCueIdError
+  | CueNotMarkedError
   | DuplicateMarkError
   | InvalidTimeError
   | NonMonotonicTimeError
