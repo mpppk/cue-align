@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 
-export const useLocalMediaUrl = (file: Blob | undefined): string | undefined => {
+export const useLocalMediaUrl = (
+  file: Blob | undefined,
+): string | undefined => {
   const [url, setUrl] = useState<string>()
 
   useEffect(() => {
