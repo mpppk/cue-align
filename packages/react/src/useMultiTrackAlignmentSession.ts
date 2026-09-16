@@ -34,12 +34,8 @@ import type {
   TimelinePosition,
   TrackId,
 } from '@mpppk/cue-align-core'
-import {
-  getAlignmentSessionSnapshot,
-} from './useAlignmentSession'
-import type {
-  AlignmentSessionSnapshot,
-} from './useAlignmentSession'
+import { getAlignmentSessionSnapshot } from './useAlignmentSession'
+import type { AlignmentSessionSnapshot } from './useAlignmentSession'
 
 export type MultiTrackAlignmentSessionSnapshot<TCue extends Cue> =
   AlignmentSessionSnapshot<TCue> & {
@@ -53,22 +49,12 @@ const getCurrentTrackContext = <TCue extends Cue>(
   state: MultiTrackAlignmentState,
   tracks: ReadonlyArray<CueTrack<TCue>>,
 ): { track: CueTrack<TCue>; state: AlignmentState } => {
-  const track = tracks.find((candidate) => candidate.id === state.currentTrackId)
-  const trackState = state.statesByTrackId.get(state.currentTrackId)
-
-  if (track === undefined || trackState === undefined) {
-    const fallbackTrack = tracks[0]
-    const fallbackState =
-      fallbackTrack === undefined
-        ? undefined
-        : state.statesByTrackId.get(fallbackTrack.id)
-
-    if (fallbackTrack === undefined || fallbackState === undefined) {
-      throw new Error('Invalid multi-track Alignment state')
-    }
-
-    return { track: fallbackTrack, state: fallbackState }
-  }
+  const track = tracks.find(
+    (candidate) => candidate.id === state.currentTrackId,
+  ) as CueTrack<TCue>
+  const trackState = state.statesByTrackId.get(
+    state.currentTrackId,
+  ) as AlignmentState
 
   return { track, state: trackState }
 }
