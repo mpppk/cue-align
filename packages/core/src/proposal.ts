@@ -12,7 +12,10 @@ import { asCueId, asTimelinePosition } from './types'
 import type { Alignment, Cue, Mark } from './types'
 import { validateAlignment } from './validation'
 
-export type AlignmentProposalProvider<TInput, TProviderError extends Error> = {
+export type AlignmentProposalProvider<
+  TInput,
+  TProviderError extends Error,
+> = {
   propose: (input: TInput) => Result.ResultAsync<unknown, TProviderError>
 }
 
