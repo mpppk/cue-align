@@ -55,10 +55,10 @@ describe('arbitrary Cue selection', () => {
     const session = sessionResult.value
     expect(session.seekCue(ids.b)).toBeSuccess()
 
-    session.goToPreviousCue()
+    session.previousCue()
     expect(session.currentCue?.id).toBe(ids.a)
 
-    session.goToNextCue()
+    session.nextCue()
     expect(session.currentCue?.id).toBe(ids.b)
   })
 })
