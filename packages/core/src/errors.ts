@@ -55,6 +55,12 @@ export class UnsupportedAlignmentVersionError extends ErrorFactory({
   fields: ErrorFactory.fields<{ version: unknown }>(),
 }) {}
 
+export class InvalidAlignmentProposalError extends ErrorFactory({
+  name: 'InvalidAlignmentProposalError',
+  message: 'Alignment proposal is malformed',
+  fields: ErrorFactory.fields<{ path: string; reason: string }>(),
+}) {}
+
 export class InvalidCueIndexError extends ErrorFactory({
   name: 'InvalidCueIndexError',
   message: 'Cue index is out of range',
@@ -92,6 +98,15 @@ export type AdjustMarkError =
 export type SeekCueError = UnknownCueIdError
 export type SeekIndexError = InvalidCueIndexError
 
+export type ParseAlignmentProposalError =
+  | InvalidAlignmentProposalError
+  | UnsupportedAlignmentVersionError
+  | ValidateAlignmentError
+
+export type RequestAlignmentProposalError<TProviderError extends Error> =
+  | TProviderError
+  | ParseAlignmentProposalError
+
 /** All domain errors, useful as an umbrella type but intentionally not used by Result APIs. */
 export type AlignmentError =
   | EmptyCueIdError
@@ -102,4 +117,5 @@ export type AlignmentError =
   | InvalidTimeError
   | NonMonotonicTimeError
   | UnsupportedAlignmentVersionError
+  | InvalidAlignmentProposalError
   | InvalidCueIndexError
