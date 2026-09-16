@@ -18,15 +18,13 @@ import { useMultiTrackAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { markForAuthoringMode } from '../authoringMode'
 import type { AuthoringMode } from '../authoringMode'
-import {
-  createAutosaveScheduler,
-  getMediaIdentity,
-  saveAutosave,
-} from '../autosave'
-import type { AutosaveSnapshot, RecoveredAuthoringSession } from '../autosave'
+import { createAutosaveScheduler } from '../autosave'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'
 import { PlaybackToggleError } from '../playback'
+import { saveProjectSession } from '../../project/repository'
+import type { SaveProjectSessionError } from '../../project/errors'
+import type { ProjectId, SaveProjectSessionInput } from '../../project/project'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueList } from './CueList'
 import { CueViewer } from './CueViewer'
@@ -36,9 +34,12 @@ import { ShortcutGuide } from './ShortcutGuide'
 import { WaveformReview } from './WaveformReview'
 
 type EditorProps = {
+  projectId: ProjectId
+  projectName?: string
   authoring: AuthoringInput
   mediaFile: File
-  recovery?: RecoveredAuthoringSession
+  initialTrackId?: TrackId
+  initialCueId?: CueId
   onBack: () => void
 }
 
@@ -58,33 +59,30 @@ const formatPlaybackTime = (seconds: number): string => {
 
 const createEditorInitialState = (
   authoring: AuthoringInput,
-  recovery?: RecoveredAuthoringSession,
+  initialTrackId?: TrackId,
+  initialCueId?: CueId,
 ) => {
   const initialStateResult = createMultiTrackAlignmentState({
     tracks: authoring.tracks,
     alignment: authoring.alignment,
-    ...(recovery === undefined
-      ? {}
-      : { initialTrackId: recovery.currentTrackId }),
+    ...(initialTrackId === undefined ? {} : { initialTrackId }),
   })
-  if (
-    Result.isFailure(initialStateResult) ||
-    recovery?.currentCueId === undefined
-  ) {
+  if (Result.isFailure(initialStateResult) || initialCueId === undefined) {
     return initialStateResult
   }
 
+  const resolvedTrackId =
+    initialTrackId ?? initialStateResult.value.currentTrackId
   const track = authoring.tracks.find(
-    (candidate) => candidate.id === recovery.currentTrackId,
+    (candidate) => candidate.id === resolvedTrackId,
   )
-  const trackState = initialStateResult.value.statesByTrackId.get(
-    recovery.currentTrackId,
-  )
+  const trackState =
+    initialStateResult.value.statesByTrackId.get(resolvedTrackId)
   if (track === undefined || trackState === undefined) {
     return initialStateResult
   }
 
-  const seekResult = seekCue(trackState, track.cues, recovery.currentCueId)
+  const seekResult = seekCue(trackState, track.cues, initialCueId)
   if (Result.isFailure(seekResult)) {
     return Result.fail(seekResult.error)
   }
@@ -95,6 +93,8 @@ const createEditorInitialState = (
 }
 
 function ReadyEditor({
+  projectId,
+  projectName,
   authoring,
   mediaFile,
   onBack,
@@ -108,30 +108,27 @@ function ReadyEditor({
   const [playbackError, setPlaybackError] = useState<PlaybackToggleError>()
   const [interactionError, setInteractionError] =
     useState<EditorInteractionError>()
-  const [autosaveError, setAutosaveError] = useState<Error>()
+  const [autosaveError, setAutosaveError] = useState<SaveProjectSessionError>()
   const session = useMultiTrackAlignmentSession(authoring.tracks, initialState)
   const alignmentFingerprint = JSON.stringify(session.multiTrackAlignment)
   const autosaveScheduler = useMemo(
     () =>
-      createAutosaveScheduler((snapshot: AutosaveSnapshot) => {
-        const result = saveAutosave(window.localStorage, snapshot)
-        if (Result.isFailure(result)) {
-          setAutosaveError(result.error)
-          return
-        }
+      createAutosaveScheduler((snapshot: SaveProjectSessionInput) => {
+        void saveProjectSession(projectId, snapshot).then((result) => {
+          if (Result.isFailure(result)) {
+            setAutosaveError(result.error)
+            return
+          }
 
-        setAutosaveError(undefined)
+          setAutosaveError(undefined)
+        })
       }),
-    [],
+    [projectId],
   )
 
   useEffect(() => {
     autosaveScheduler.schedule({
-      authoring: {
-        tracks: authoring.tracks,
-        alignment: session.multiTrackAlignment,
-      },
-      media: getMediaIdentity(mediaFile),
+      alignment: session.multiTrackAlignment,
       currentTrackId: session.currentTrackId,
       ...(session.currentCue === undefined
         ? {}
@@ -139,9 +136,7 @@ function ReadyEditor({
     })
   }, [
     alignmentFingerprint,
-    authoring.tracks,
     autosaveScheduler,
-    mediaFile,
     session.currentCue,
     session.currentTrackId,
     session.multiTrackAlignment,
@@ -266,7 +261,13 @@ function ReadyEditor({
           <h1 id="editor-title">
             {mediaKind === 'video' ? 'Video authoring' : 'Audio authoring'}
           </h1>
+          {projectName === undefined ? null : (
+            <p className="media-name">Project: {projectName}</p>
+          )}
           <p className="media-name">{mediaFile.name}</p>
+          <p className="media-name">
+            編集内容は Project へ自動保存されます（端末・origin ローカル）。
+          </p>
         </div>
         <div className="editor-actions">
           <button
@@ -361,6 +362,12 @@ function ReadyEditor({
         <div className="error-message" role="alert">
           <strong>{visibleError.name}</strong>
           <span>{visibleError.message}</span>
+          {visibleError === autosaveError ? (
+            <span>
+              Project への自動保存に失敗しました。編集と Alignment JSON export
+              は継続できます。
+            </span>
+          ) : null}
         </div>
       )}
 
@@ -396,14 +403,17 @@ function ReadyEditor({
 }
 
 export function Editor({
+  projectId,
+  projectName,
   authoring,
   mediaFile,
-  recovery,
+  initialTrackId,
+  initialCueId,
   onBack,
 }: EditorProps) {
   const initialStateResult = useMemo(
-    () => createEditorInitialState(authoring, recovery),
-    [authoring, recovery],
+    () => createEditorInitialState(authoring, initialTrackId, initialCueId),
+    [authoring, initialTrackId, initialCueId],
   )
 
   if (Result.isFailure(initialStateResult)) {
@@ -422,9 +432,10 @@ export function Editor({
 
   return (
     <ReadyEditor
+      projectId={projectId}
+      projectName={projectName}
       authoring={authoring}
       mediaFile={mediaFile}
-      recovery={recovery}
       onBack={onBack}
       initialState={initialStateResult.value}
     />
