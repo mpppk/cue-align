@@ -10,9 +10,12 @@ import type {
 } from '@mpppk/cue-align-core'
 import { useAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
+import { markForAuthoringMode } from '../authoringMode'
+import type { AuthoringMode } from '../authoringMode'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
+import { CueList } from './CueList'
 import { CueViewer } from './CueViewer'
 import { MediaPlayer, getMediaKind } from './MediaPlayer'
 import { Progress } from './Progress'
@@ -47,12 +50,24 @@ function ReadyEditor({
 }: ReadyEditorProps) {
   const mediaRef = useRef<HTMLMediaElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
+  const [authoringMode, setAuthoringMode] = useState<AuthoringMode>('sequential')
   const [exportError, setExportError] = useState<AlignmentExportError>()
   const [waveformError, setWaveformError] = useState<WaveformEditError>()
   const session = useAlignmentSession(authoring.cues, initialState)
   const shortcutError = useAlignmentShortcuts({
     mediaRef,
-    actions: session,
+    actions: {
+      mark: (at) =>
+        markForAuthoringMode(
+          session,
+          authoringMode,
+          session.currentCue?.id,
+          at,
+        ),
+      undo: session.undo,
+      goToPreviousCue: session.goToPreviousCue,
+      goToNextCue: session.goToNextCue,
+    },
   })
   const visibleError = shortcutError ?? waveformError ?? exportError
   const mediaKind = getMediaKind(mediaFile)
@@ -83,13 +98,14 @@ function ReadyEditor({
     setCurrentTime(nextTime)
   }
 
-  const handleWaveformCueSelect = (cueId: CueId) => {
+  const handleCueSelect = (cueId: CueId) => {
     const result = session.seekCue(cueId)
     if (Result.isFailure(result)) {
       setWaveformError(result.error)
       return
     }
 
+    setAuthoringMode('selection')
     setWaveformError(undefined)
   }
 
@@ -128,6 +144,32 @@ function ReadyEditor({
         </div>
       </div>
 
+      <div className="authoring-mode-toolbar">
+        <div className="authoring-mode-switch" role="group" aria-label="Authoring mode">
+          <button
+            className="secondary-button"
+            type="button"
+            aria-pressed={authoringMode === 'sequential'}
+            onClick={() => setAuthoringMode('sequential')}
+          >
+            Sequential
+          </button>
+          <button
+            className="secondary-button"
+            type="button"
+            aria-pressed={authoringMode === 'selection'}
+            onClick={() => setAuthoringMode('selection')}
+          >
+            Selection
+          </button>
+        </div>
+        <p>
+          {authoringMode === 'sequential'
+            ? 'Space で Mark すると次の Cue へ進みます。'
+            : '選択中の Cue を Space で Mark / re-mark します。'}
+        </p>
+      </div>
+
       <div className="playback-time" aria-label="Current playback time">
         {formatPlaybackTime(currentTime)}
       </div>
@@ -145,7 +187,7 @@ function ReadyEditor({
           currentCueId={session.currentCue?.id}
           currentTime={currentTime}
           onSeek={handleWaveformSeek}
-          onSelectCue={handleWaveformCueSelect}
+          onSelectCue={handleCueSelect}
           onAdjustMark={handleWaveformMarkAdjust}
         />
       ) : null}
@@ -169,6 +211,13 @@ function ReadyEditor({
         currentCue={session.currentCue}
         nextCue={session.nextCue}
         isCurrentMarked={session.currentMark !== undefined}
+      />
+
+      <CueList
+        cues={authoring.cues}
+        alignment={session.alignment}
+        currentCueId={session.currentCue?.id}
+        onSelectCue={handleCueSelect}
       />
 
       <Progress
