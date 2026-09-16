@@ -202,12 +202,8 @@ export function WaveformReview({
               style={{ left: `${previewRatio * 100}%` }}
               aria-label={`Cue ${mark.cueId} at ${formatSeconds(previewAt)}. Drag to adjust.`}
               title={`${mark.cueId} · ${formatSeconds(previewAt)}`}
-              onPointerDown={(event) =>
-                beginDrag(event, mark.cueId, mark.at)
-              }
-              onPointerMove={(event) =>
-                updateDrag(event, mark.cueId, mark.at)
-              }
+              onPointerDown={(event) => beginDrag(event, mark.cueId, mark.at)}
+              onPointerMove={(event) => updateDrag(event, mark.cueId, mark.at)}
               onPointerUp={(event) => finishDrag(event, mark.cueId)}
               onPointerCancel={() => setDragPreview(undefined)}
               onClick={(event) => {
