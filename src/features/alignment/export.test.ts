@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test'
 
 import { asCueId, asTimelinePosition } from '@mpppk/cue-align-core'
-import { parseAlignmentJson } from './input'
 import { serializeAlignment } from './export'
+import { parseAlignmentJson } from './input'
 
 const cues = [
   { id: asCueId('a'), label: 'Alpha' },
@@ -28,6 +28,7 @@ describe('alignment export', () => {
         { cueId: asCueId('a'), at: asTimelinePosition(1.25) },
         { cueId: asCueId('b'), at: asTimelinePosition(2.5) },
       ],
+      ranges: [{ cueId: asCueId('a'), end: asTimelinePosition(2) }],
     }
 
     const result = parseAlignmentJson(cues, serializeAlignment(alignment))

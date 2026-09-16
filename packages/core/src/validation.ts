@@ -1,9 +1,12 @@
 import { Result } from '@praha/byethrow'
 
 import {
+  CueNotMarkedError,
   DuplicateCueIdError,
   DuplicateMarkError,
+  DuplicateRangeError,
   EmptyCueIdError,
+  InvalidRangeError,
   InvalidTimeError,
   NonMonotonicTimeError,
   UnknownCueIdError,
@@ -40,6 +43,23 @@ export const validateTime = (
   }
 
   return Result.succeed(at)
+}
+
+export const validateRangeEnd = (
+  cueId: CueId,
+  start: TimelinePosition,
+  end: TimelinePosition,
+): Result.Result<TimelinePosition, InvalidTimeError | InvalidRangeError> => {
+  const timeValidation = validateTime(end)
+  if (Result.isFailure(timeValidation)) {
+    return Result.fail(timeValidation.error)
+  }
+
+  if (end < start) {
+    return Result.fail(new InvalidRangeError({ cueId, start, end }))
+  }
+
+  return Result.succeed(end)
 }
 
 export const validateAlignment = <TCue extends Cue>(
@@ -93,6 +113,30 @@ export const validateAlignment = <TCue extends Cue>(
     }
 
     previousAt = at
+  }
+
+  const rangeCueIds = new Set<CueId>()
+
+  for (const range of alignment.ranges ?? []) {
+    if (!cueIds.has(range.cueId)) {
+      return Result.fail(new UnknownCueIdError({ cueId: range.cueId }))
+    }
+
+    if (rangeCueIds.has(range.cueId)) {
+      return Result.fail(new DuplicateRangeError({ cueId: range.cueId }))
+    }
+
+    const start = marksByCueId.get(range.cueId)
+    if (start === undefined) {
+      return Result.fail(new CueNotMarkedError({ cueId: range.cueId }))
+    }
+
+    const rangeValidation = validateRangeEnd(range.cueId, start, range.end)
+    if (Result.isFailure(rangeValidation)) {
+      return Result.fail(rangeValidation.error)
+    }
+
+    rangeCueIds.add(range.cueId)
   }
 
   return Result.succeed(marksByCueId)

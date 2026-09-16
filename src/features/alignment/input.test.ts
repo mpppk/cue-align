@@ -3,6 +3,7 @@ import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 import type { Result } from '@praha/byethrow'
 import {
   DuplicateCueIdError,
+  InvalidRangeError,
   InvalidTimeError,
   UnsupportedAlignmentVersionError,
   UnknownCueIdError,
@@ -121,6 +122,46 @@ describe('authoring input pipeline', () => {
           { cueId: 'b', at: 2.5 },
         ],
       })
+    })
+  })
+
+  it('parses explicit range ends without changing start Marks', () => {
+    const result = parseAlignmentJson(
+      cues,
+      JSON.stringify({
+        version: 1,
+        marks: [
+          { cueId: 'a', at: 1.25 },
+          { cueId: 'b', at: 4 },
+        ],
+        ranges: [{ cueId: 'a', end: 3.5 }],
+      }),
+    )
+
+    expect(result).toBeSuccess((alignment) => {
+      expect(alignment).toEqual({
+        version: 1,
+        marks: [
+          { cueId: 'a', at: 1.25 },
+          { cueId: 'b', at: 4 },
+        ],
+        ranges: [{ cueId: 'a', end: 3.5 }],
+      })
+    })
+  })
+
+  it('rejects explicit range ends before their start Mark', () => {
+    const result = parseAlignmentJson(
+      cues,
+      JSON.stringify({
+        version: 1,
+        marks: [{ cueId: 'a', at: 2 }],
+        ranges: [{ cueId: 'a', end: 1 }],
+      }),
+    )
+
+    expect(result).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(InvalidRangeError)
     })
   })
 

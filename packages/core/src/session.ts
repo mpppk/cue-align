@@ -2,23 +2,33 @@ import { Result } from '@praha/byethrow'
 
 import type {
   AdjustMarkError,
+  ClearRangeEndError,
   CreateAlignmentSessionError,
   MarkCurrentError,
   MarkError,
   SeekCueError,
   SeekIndexError,
+  SetRangeEndError,
 } from './errors'
-import { getAlignment, getCurrentCue, getMark, isComplete } from './selectors'
+import {
+  getAlignment,
+  getCurrentCue,
+  getMark,
+  getRange,
+  isComplete,
+} from './selectors'
 import { createAlignmentState } from './state'
 import type { CreateAlignmentStateOptions } from './state'
 import {
   adjustMark as applyAdjustMark,
+  clearRangeEnd as applyClearRangeEnd,
   mark as applyMark,
   markCurrent as applyMarkCurrent,
   nextCue as applyNextCue,
   previousCue as applyPreviousCue,
   seekCue as applySeekCue,
   seekIndex as applySeekIndex,
+  setRangeEnd as applySetRangeEnd,
   undo as applyUndo,
 } from './transitions'
 import type {
@@ -26,6 +36,7 @@ import type {
   Cue,
   CueId,
   CueIndex,
+  CueRange,
   Mark,
   TimelinePosition,
 } from './types'
@@ -40,12 +51,18 @@ export type AlignmentSession<TCue extends Cue> = {
     cueId: CueId,
     at: TimelinePosition,
   ) => Result.Result<void, AdjustMarkError>
+  setRangeEnd: (
+    cueId: CueId,
+    end: TimelinePosition,
+  ) => Result.Result<void, SetRangeEndError>
+  clearRangeEnd: (cueId: CueId) => Result.Result<void, ClearRangeEndError>
   undo: () => boolean
   seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
   seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
   nextCue: () => void
   previousCue: () => void
   getMark: (cueId: CueId) => Mark | undefined
+  getRange: (cueId: CueId) => CueRange | undefined
   getAlignment: () => Alignment
   isComplete: () => boolean
 }
@@ -98,6 +115,24 @@ export const createAlignmentSession = <TCue extends Cue>(
       state = result.value
       return Result.succeed(undefined)
     },
+    setRangeEnd: (cueId, end) => {
+      const result = applySetRangeEnd(state, cues, cueId, end)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      state = result.value
+      return Result.succeed(undefined)
+    },
+    clearRangeEnd: (cueId) => {
+      const result = applyClearRangeEnd(state, cues, cueId)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      state = result.value
+      return Result.succeed(undefined)
+    },
     undo: () => {
       const result = applyUndo(state)
       state = result.state
@@ -128,6 +163,7 @@ export const createAlignmentSession = <TCue extends Cue>(
       state = applyPreviousCue(state)
     },
     getMark: (cueId) => getMark(state, cueId),
+    getRange: (cueId) => getRange(state, cueId),
     getAlignment: () => getAlignment(state, cues),
     isComplete: () => isComplete(state, cues),
   }
