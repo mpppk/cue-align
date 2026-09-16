@@ -39,6 +39,7 @@ const createEvent = ({
 
 const createActions = () => {
   let markedAt: TimelinePosition | undefined
+  let toggleCount = 0
   let undoCount = 0
   let previousCount = 0
   let nextCount = 0
@@ -47,6 +48,9 @@ const createActions = () => {
     mark: (at) => {
       markedAt = at
       return Result.succeed(undefined)
+    },
+    togglePlayback: () => {
+      toggleCount += 1
     },
     undo: () => {
       undoCount += 1
@@ -63,6 +67,7 @@ const createActions = () => {
   return {
     actions,
     getMarkedAt: () => markedAt,
+    getToggleCount: () => toggleCount,
     getUndoCount: () => undoCount,
     getPreviousCount: () => previousCount,
     getNextCount: () => nextCount,
@@ -77,13 +82,30 @@ const editableTarget = (
 describe('alignment keyboard shortcuts', () => {
   it('marks using the media currentTime read at the keyboard event', () => {
     const state = createActions()
-    const keyboard = createEvent({ code: 'Space' })
+    const keyboard = createEvent({ code: 'Enter' })
     const media = { currentTime: 12.345 }
 
     const result = handleAlignmentShortcut(keyboard.event, media, state.actions)
 
     expect(result).toBeSuccess((handled) => expect(handled).toBe(true))
     expect(state.getMarkedAt()).toBe(asTimelinePosition(12.345))
+    expect(state.getToggleCount()).toBe(0)
+    expect(keyboard.wasPrevented()).toBe(true)
+  })
+
+  it('toggles playback without marking', () => {
+    const state = createActions()
+    const keyboard = createEvent({ code: 'Space' })
+
+    const result = handleAlignmentShortcut(
+      keyboard.event,
+      { currentTime: 12.345 },
+      state.actions,
+    )
+
+    expect(result).toBeSuccess((handled) => expect(handled).toBe(true))
+    expect(state.getToggleCount()).toBe(1)
+    expect(state.getMarkedAt()).toBeUndefined()
     expect(keyboard.wasPrevented()).toBe(true)
   })
 
@@ -106,7 +128,7 @@ describe('alignment keyboard shortcuts', () => {
 
   it('suppresses repeated handled keys without repeating the action', () => {
     const state = createActions()
-    const keyboard = createEvent({ code: 'Space', repeat: true })
+    const keyboard = createEvent({ code: 'Enter', repeat: true })
 
     const result = handleAlignmentShortcut(
       keyboard.event,
@@ -119,6 +141,21 @@ describe('alignment keyboard shortcuts', () => {
     expect(keyboard.wasPrevented()).toBe(true)
   })
 
+  it('suppresses repeated playback toggles', () => {
+    const state = createActions()
+    const keyboard = createEvent({ code: 'Space', repeat: true })
+
+    const result = handleAlignmentShortcut(
+      keyboard.event,
+      { currentTime: 3 },
+      state.actions,
+    )
+
+    expect(result).toBeSuccess((handled) => expect(handled).toBe(false))
+    expect(state.getToggleCount()).toBe(0)
+    expect(keyboard.wasPrevented()).toBe(true)
+  })
+
   it('ignores shortcuts while an editable element has focus', () => {
     const state = createActions()
 
@@ -128,18 +165,29 @@ describe('alignment keyboard shortcuts', () => {
       editableTarget('select'),
       editableTarget('div', true),
     ]) {
-      const keyboard = createEvent({ code: 'Space', target })
+      const markKeyboard = createEvent({ code: 'Enter', target })
       expect(
         handleAlignmentShortcut(
-          keyboard.event,
+          markKeyboard.event,
           { currentTime: 4 },
           state.actions,
         ),
       ).toBeSuccess((handled) => expect(handled).toBe(false))
-      expect(keyboard.wasPrevented()).toBe(false)
+      expect(markKeyboard.wasPrevented()).toBe(false)
+
+      const playbackKeyboard = createEvent({ code: 'Space', target })
+      expect(
+        handleAlignmentShortcut(
+          playbackKeyboard.event,
+          { currentTime: 4 },
+          state.actions,
+        ),
+      ).toBeSuccess((handled) => expect(handled).toBe(false))
+      expect(playbackKeyboard.wasPrevented()).toBe(false)
     }
 
     expect(state.getMarkedAt()).toBeUndefined()
+    expect(state.getToggleCount()).toBe(0)
   })
 
   it('identifies editable targets without requiring DOM globals', () => {
