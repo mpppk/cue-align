@@ -50,7 +50,8 @@ function ReadyEditor({
 }: ReadyEditorProps) {
   const mediaRef = useRef<HTMLMediaElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
-  const [authoringMode, setAuthoringMode] = useState<AuthoringMode>('sequential')
+  const [authoringMode, setAuthoringMode] =
+    useState<AuthoringMode>('sequential')
   const [exportError, setExportError] = useState<AlignmentExportError>()
   const [waveformError, setWaveformError] = useState<WaveformEditError>()
   const session = useAlignmentSession(authoring.cues, initialState)
@@ -145,7 +146,11 @@ function ReadyEditor({
       </div>
 
       <div className="authoring-mode-toolbar">
-        <div className="authoring-mode-switch" role="group" aria-label="Authoring mode">
+        <div
+          className="authoring-mode-switch"
+          role="group"
+          aria-label="Authoring mode"
+        >
           <button
             className="secondary-button"
             type="button"
