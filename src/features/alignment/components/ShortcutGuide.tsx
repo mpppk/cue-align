@@ -1,5 +1,5 @@
 const shortcuts = [
-  ['Space', 'Mark current Cue'],
+  ['Space', 'Mark current / selected Cue'],
   ['Backspace', 'Undo last Mark'],
   ['←', 'Previous Cue'],
   ['→', 'Next Cue'],
