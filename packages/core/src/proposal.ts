@@ -12,8 +12,10 @@ import { asCueId, asTimelinePosition } from './types'
 import type { Alignment, Cue, Mark } from './types'
 import { validateAlignment } from './validation'
 
+export type RawProposal = Record<string, unknown>
+
 export type AlignmentProposalProvider<TInput, TProviderError extends Error> = {
-  propose: (input: TInput) => Result.ResultAsync<unknown, TProviderError>
+  propose: (input: TInput) => Result.ResultAsync<RawProposal, TProviderError>
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
