@@ -1,6 +1,6 @@
 import { ErrorFactory } from '@praha/error-factory'
 
-import type { CueId, CueIndex, TimelinePosition } from './types'
+import type { CueId, CueIndex, TimelinePosition, TrackId } from './types'
 
 export class EmptyCueIdError extends ErrorFactory({
   name: 'EmptyCueIdError',
@@ -18,6 +18,35 @@ export class UnknownCueIdError extends ErrorFactory({
   name: 'UnknownCueIdError',
   message: 'Cue ID was not found',
   fields: ErrorFactory.fields<{ cueId: CueId }>(),
+}) {}
+
+export class EmptyTrackListError extends ErrorFactory({
+  name: 'EmptyTrackListError',
+  message: 'At least one Cue track is required',
+}) {}
+
+export class EmptyTrackIdError extends ErrorFactory({
+  name: 'EmptyTrackIdError',
+  message: 'Track ID must not be empty',
+  fields: ErrorFactory.fields<{ index: number }>(),
+}) {}
+
+export class DuplicateTrackIdError extends ErrorFactory({
+  name: 'DuplicateTrackIdError',
+  message: 'Track ID must be unique',
+  fields: ErrorFactory.fields<{ trackId: TrackId }>(),
+}) {}
+
+export class UnknownTrackIdError extends ErrorFactory({
+  name: 'UnknownTrackIdError',
+  message: 'Track ID was not found',
+  fields: ErrorFactory.fields<{ trackId: TrackId }>(),
+}) {}
+
+export class DuplicateTrackAlignmentError extends ErrorFactory({
+  name: 'DuplicateTrackAlignmentError',
+  message: 'Multi-track Alignment must not contain duplicate track entries',
+  fields: ErrorFactory.fields<{ trackId: TrackId }>(),
 }) {}
 
 export class CueNotMarkedError extends ErrorFactory({
@@ -85,6 +114,12 @@ export class InvalidCueIndexError extends ErrorFactory({
 
 export type ValidateCuesError = EmptyCueIdError | DuplicateCueIdError
 
+export type ValidateCueTracksError =
+  | EmptyTrackListError
+  | EmptyTrackIdError
+  | DuplicateTrackIdError
+  | ValidateCuesError
+
 export type ValidateAlignmentError =
   | ValidateCuesError
   | UnknownCueIdError
@@ -95,8 +130,15 @@ export type ValidateAlignmentError =
   | InvalidRangeError
   | NonMonotonicTimeError
 
+export type ValidateMultiTrackAlignmentError =
+  | ValidateCueTracksError
+  | UnknownTrackIdError
+  | DuplicateTrackAlignmentError
+  | ValidateAlignmentError
+
 export type CreateAlignmentStateError = ValidateAlignmentError
 export type CreateAlignmentSessionError = CreateAlignmentStateError
+export type CreateMultiTrackAlignmentStateError = ValidateMultiTrackAlignmentError
 
 export type MarkCurrentError =
   | InvalidCueIndexError
@@ -127,6 +169,7 @@ export type ClearRangeEndError = UnknownCueIdError
 
 export type SeekCueError = UnknownCueIdError
 export type SeekIndexError = InvalidCueIndexError
+export type SelectTrackError = UnknownTrackIdError
 
 export type ParseAlignmentProposalError =
   | InvalidAlignmentProposalError
@@ -142,6 +185,11 @@ export type AlignmentError =
   | EmptyCueIdError
   | DuplicateCueIdError
   | UnknownCueIdError
+  | EmptyTrackListError
+  | EmptyTrackIdError
+  | DuplicateTrackIdError
+  | UnknownTrackIdError
+  | DuplicateTrackAlignmentError
   | CueNotMarkedError
   | DuplicateMarkError
   | DuplicateRangeError
