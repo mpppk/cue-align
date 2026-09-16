@@ -11,11 +11,7 @@ const ids = {
   c: asCueId('c'),
 }
 
-const cues: ReadonlyArray<Cue> = [
-  { id: ids.a },
-  { id: ids.b },
-  { id: ids.c },
-]
+const cues: ReadonlyArray<Cue> = [{ id: ids.a }, { id: ids.b }, { id: ids.c }]
 
 const position = (value: number) => asTimelinePosition(value)
 
