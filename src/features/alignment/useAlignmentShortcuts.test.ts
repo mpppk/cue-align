@@ -44,7 +44,7 @@ const createActions = () => {
   let nextCount = 0
 
   const actions: AlignmentShortcutActions = {
-    markCurrent: (at) => {
+    mark: (at) => {
       markedAt = at
       return Result.succeed(undefined)
     },
