@@ -23,10 +23,7 @@ import {
   getMediaIdentity,
   saveAutosave,
 } from '../autosave'
-import type {
-  AutosaveSnapshot,
-  RecoveredAuthoringSession,
-} from '../autosave'
+import type { AutosaveSnapshot, RecoveredAuthoringSession } from '../autosave'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
@@ -69,7 +66,10 @@ const createEditorInitialState = (
       ? {}
       : { initialTrackId: recovery.currentTrackId }),
   })
-  if (Result.isFailure(initialStateResult) || recovery?.currentCueId === undefined) {
+  if (
+    Result.isFailure(initialStateResult) ||
+    recovery?.currentCueId === undefined
+  ) {
     return initialStateResult
   }
 
@@ -368,7 +368,12 @@ function ReadyEditor({
   )
 }
 
-export function Editor({ authoring, mediaFile, recovery, onBack }: EditorProps) {
+export function Editor({
+  authoring,
+  mediaFile,
+  recovery,
+  onBack,
+}: EditorProps) {
   const initialStateResult = useMemo(
     () => createEditorInitialState(authoring, recovery),
     [authoring, recovery],
