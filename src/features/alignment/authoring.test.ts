@@ -1,8 +1,8 @@
 import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
 import type { Result } from '@praha/byethrow'
-import { asCueId, asTimelinePosition } from '@mpppk/cue-align-core'
-import type { Alignment } from '@mpppk/cue-align-core'
+import { asCueId, asTimelinePosition, asTrackId } from '@mpppk/cue-align-core'
+import type { MultiTrackAlignment } from '@mpppk/cue-align-core'
 import { readAuthoringInput } from './authoring'
 import type { AuthoringInput, ReadAuthoringInputError } from './authoring'
 import { InputReadError } from './errors'
@@ -19,30 +19,73 @@ describe('readAuthoringInput', () => {
     >()
   })
 
-  it('reads cues without requiring an Alignment file', async () => {
+  it('normalizes a legacy Cue array into one default track', async () => {
     const result = await readAuthoringInput(
       textFile('[{"id":"a","label":"Alpha"}]'),
     )
 
     expect(result).toBeSuccess((input) => {
       expect(input).toEqual({
-        cues: [{ id: 'a', label: 'Alpha' }],
+        tracks: [
+          {
+            id: 'default',
+            cues: [{ id: 'a', label: 'Alpha' }],
+          },
+        ],
       })
     })
   })
 
-  it('reads an optional Alignment after the Cue sequence', async () => {
+  it('normalizes a legacy v1 Alignment for a single track', async () => {
     const result = await readAuthoringInput(
       textFile('[{"id":"a"}]'),
       textFile('{"version":1,"marks":[{"cueId":"a","at":1.5}]}'),
     )
 
     expect(result).toBeSuccess((input) => {
-      const expected: Alignment = {
-        version: 1,
-        marks: [{ cueId: asCueId('a'), at: asTimelinePosition(1.5) }],
+      const expected: MultiTrackAlignment = {
+        version: 2,
+        tracks: [
+          {
+            trackId: asTrackId('default'),
+            marks: [
+              { cueId: asCueId('a'), at: asTimelinePosition(1.5) },
+            ],
+          },
+        ],
       }
       expect(input.alignment).toEqual(expected)
+    })
+  })
+
+  it('reads independent version 2 Cue tracks and Alignments', async () => {
+    const result = await readAuthoringInput(
+      textFile(
+        JSON.stringify({
+          version: 2,
+          tracks: [
+            { id: 'lyrics', label: 'Lyrics', cues: [{ id: 'a' }] },
+            { id: 'scenes', label: 'Scenes', cues: [{ id: 'a' }] },
+          ],
+        }),
+      ),
+      textFile(
+        JSON.stringify({
+          version: 2,
+          tracks: [
+            { trackId: 'lyrics', marks: [{ cueId: 'a', at: 1 }] },
+            { trackId: 'scenes', marks: [{ cueId: 'a', at: 2 }] },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toBeSuccess((input) => {
+      expect(input.tracks).toHaveLength(2)
+      expect(input.tracks[0]?.cues[0]?.id).toBe('a')
+      expect(input.tracks[1]?.cues[0]?.id).toBe('a')
+      expect(input.alignment?.tracks[0]?.marks[0]?.at).toBe(1)
+      expect(input.alignment?.tracks[1]?.marks[0]?.at).toBe(2)
     })
   })
 
