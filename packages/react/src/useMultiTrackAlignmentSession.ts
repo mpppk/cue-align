@@ -115,14 +115,15 @@ export const useMultiTrackAlignmentSession = <TCue extends Cue>(
     const currentState = stateRef.current
     const current = getCurrentTrackContext(currentState, tracks)
     const result = transition(current.state, current.track.cues)
-    if (Result.isFailure(result)) {
-      return Result.fail(result.error)
-    }
 
-    const statesByTrackId = new Map(currentState.statesByTrackId)
-    statesByTrackId.set(current.track.id, result.value)
-    commit({ ...currentState, statesByTrackId })
-    return Result.succeed(undefined)
+    return Result.pipe(
+      result,
+      Result.map((nextTrackState) => {
+        const statesByTrackId = new Map(currentState.statesByTrackId)
+        statesByTrackId.set(current.track.id, nextTrackState)
+        commit({ ...currentState, statesByTrackId })
+      }),
+    )
   }
 
   const snapshot = getMultiTrackAlignmentSessionSnapshot(state, tracks)
