@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 
 import { asTimelinePosition } from '@mpppk/cue-align-core'
-import type { MarkCurrentError, TimelinePosition } from '@mpppk/cue-align-core'
+import type { TimelinePosition } from '@mpppk/cue-align-core'
+import type { AuthoringMarkError } from './authoringMode'
 
 type AlignmentShortcut = 'mark-current' | 'undo' | 'previous-cue' | 'next-cue'
 
 export type AlignmentShortcutActions = {
-  markCurrent: (at: TimelinePosition) => Result.Result<void, MarkCurrentError>
+  mark: (at: TimelinePosition) => Result.Result<void, AuthoringMarkError>
   undo: () => boolean
   goToPreviousCue: () => void
   goToNextCue: () => void
@@ -65,7 +66,7 @@ export const handleAlignmentShortcut = (
   event: AlignmentShortcutEvent,
   media: Pick<HTMLMediaElement, 'currentTime'> | null,
   actions: AlignmentShortcutActions,
-): Result.Result<boolean, MarkCurrentError> => {
+): Result.Result<boolean, AuthoringMarkError> => {
   if (isEditableShortcutTarget(event.target)) {
     return Result.succeed(false)
   }
@@ -87,7 +88,7 @@ export const handleAlignmentShortcut = (
         return Result.succeed(false)
       }
 
-      const result = actions.markCurrent(asTimelinePosition(media.currentTime))
+      const result = actions.mark(asTimelinePosition(media.currentTime))
       if (Result.isFailure(result)) {
         return Result.fail(result.error)
       }
@@ -114,8 +115,8 @@ type UseAlignmentShortcutsOptions = {
 export const useAlignmentShortcuts = ({
   mediaRef,
   actions,
-}: UseAlignmentShortcutsOptions): MarkCurrentError | undefined => {
-  const [error, setError] = useState<MarkCurrentError>()
+}: UseAlignmentShortcutsOptions): AuthoringMarkError | undefined => {
+  const [error, setError] = useState<AuthoringMarkError>()
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
