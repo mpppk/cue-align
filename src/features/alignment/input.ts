@@ -7,7 +7,7 @@ import {
   validateAlignment,
   validateCues,
 } from '@mpppk/cue-align-core'
-import type { Alignment, Cue, Mark } from '@mpppk/cue-align-core'
+import type { Alignment, Cue, CueRange, Mark } from '@mpppk/cue-align-core'
 import {
   InputParseError,
   InputReadError,
@@ -191,7 +191,59 @@ export const parseAlignmentInput = (
     })
   }
 
-  const alignment: Alignment = { version: 1, marks }
+  const ranges: Array<CueRange> = []
+  if (value.ranges !== undefined) {
+    if (!Array.isArray(value.ranges)) {
+      return Result.fail(
+        new InvalidAlignmentInputError({
+          path: '$.ranges',
+          reason: 'Expected an array when present',
+        }),
+      )
+    }
+
+    for (const [index, rawRange] of value.ranges.entries()) {
+      if (!isJsonObject(rawRange)) {
+        return Result.fail(
+          new InvalidAlignmentInputError({
+            path: `$.ranges[${index}]`,
+            reason: 'Expected an object',
+          }),
+        )
+      }
+
+      const cueId = rawRange.cueId
+      if (typeof cueId !== 'string') {
+        return Result.fail(
+          new InvalidAlignmentInputError({
+            path: `$.ranges[${index}].cueId`,
+            reason: 'Expected a string',
+          }),
+        )
+      }
+
+      const end = rawRange.end
+      if (typeof end !== 'number') {
+        return Result.fail(
+          new InvalidAlignmentInputError({
+            path: `$.ranges[${index}].end`,
+            reason: 'Expected a number',
+          }),
+        )
+      }
+
+      ranges.push({
+        cueId: asCueId(cueId),
+        end: asTimelinePosition(end),
+      })
+    }
+  }
+
+  const alignment: Alignment = {
+    version: 1,
+    marks,
+    ...(ranges.length === 0 ? {} : { ranges }),
+  }
 
   return Result.pipe(
     Result.succeed(alignment),
