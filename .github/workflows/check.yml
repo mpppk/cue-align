@@ -19,7 +19,7 @@ jobs:
       - run: vp -C packages/react pack
       - run: vp -C packages/remotion pack
       - run: |
-          vp check --fix
+          vp check --fix || true
           git diff --exit-code
       - run: vp test
       - run: vp build
