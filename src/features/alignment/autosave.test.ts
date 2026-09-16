@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
 
-import {
-  asCueId,
-  asTimelinePosition,
-  asTrackId,
-} from '@mpppk/cue-align-core'
+import { asCueId, asTimelinePosition, asTrackId } from '@mpppk/cue-align-core'
 import {
   AUTOSAVE_MAX_AGE_MS,
   AUTOSAVE_STORAGE_KEY,
@@ -50,9 +46,7 @@ const snapshot: AutosaveSnapshot = {
       tracks: [
         {
           trackId: asTrackId('lyrics'),
-          marks: [
-            { cueId: asCueId('a'), at: asTimelinePosition(1) },
-          ],
+          marks: [{ cueId: asCueId('a'), at: asTimelinePosition(1) }],
         },
       ],
     },
