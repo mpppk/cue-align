@@ -1,6 +1,7 @@
 import { Result } from '@praha/byethrow'
 
 import {
+  UnknownTrackIdError,
   UnsupportedAlignmentVersionError,
   alignmentToTrackAlignment,
   asTrackId,
@@ -12,6 +13,7 @@ import type {
   MultiTrackAlignment,
   TrackAlignment,
   TrackId,
+  ValidateCueTracksError,
   ValidateMultiTrackAlignmentError,
 } from '@mpppk/cue-align-core'
 import {
@@ -20,6 +22,10 @@ import {
   InvalidAlignmentInputError,
   InvalidCueInputError,
 } from './errors'
+import type {
+  ParseAlignmentInputError,
+  ParseCueInputError,
+} from './errors'
 import { parseAlignmentInput, parseCueInput } from './input'
 import type {
   JsonObject,
@@ -27,10 +33,6 @@ import type {
   ReferenceCue,
   TextFile,
 } from './input'
-import type {
-  ParseAlignmentInputError,
-  ParseCueInputError,
-} from './errors'
 
 export const DEFAULT_TRACK_ID = asTrackId('default')
 
@@ -41,12 +43,7 @@ export type ReferenceTrack = CueTrack<ReferenceCue> & {
 export type ParseCueTracksInputError =
   | InvalidCueInputError
   | ParseCueInputError
-  | ReturnType<typeof validateCueTracks<ReferenceCue>> extends Result.Result<
-        void,
-        infer TError
-      >
-    ? TError
-    : never
+  | ValidateCueTracksError
 
 export type ParseCueTracksJsonError = InputParseError | ParseCueTracksInputError
 export type ReadCueTracksFileError = InputReadError | ParseCueTracksJsonError
@@ -217,14 +214,7 @@ const parseVersionTwoTrackAlignment = (
   const trackId = asTrackId(rawTrackId)
   const track = tracks.find((candidate) => candidate.id === trackId)
   if (track === undefined) {
-    const candidate: MultiTrackAlignment = {
-      version: 2,
-      tracks: [{ trackId, marks: [] }],
-    }
-    const validation = validateMultiTrackAlignment(tracks, candidate)
-    if (Result.isFailure(validation)) {
-      return Result.fail(validation.error)
-    }
+    return Result.fail(new UnknownTrackIdError({ trackId }))
   }
 
   const nestedAlignment: JsonObject = {
@@ -232,7 +222,7 @@ const parseVersionTwoTrackAlignment = (
     marks: rawTrack.marks,
     ...(rawTrack.ranges === undefined ? {} : { ranges: rawTrack.ranges }),
   }
-  const parsed = parseAlignmentInput(track!.cues, nestedAlignment)
+  const parsed = parseAlignmentInput(track.cues, nestedAlignment)
   if (Result.isFailure(parsed)) {
     return Result.fail(parsed.error)
   }
