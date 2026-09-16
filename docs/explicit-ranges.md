@@ -41,9 +41,7 @@ For example:
     { "cueId": "a", "at": 12.5 },
     { "cueId": "b", "at": 20 }
   ],
-  "ranges": [
-    { "cueId": "a", "end": 18.25 }
-  ]
+  "ranges": [{ "cueId": "a", "end": 18.25 }]
 }
 ```
 
