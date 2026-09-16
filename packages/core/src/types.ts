@@ -1,17 +1,20 @@
 declare const cueIdBrand: unique symbol
 declare const timelinePositionBrand: unique symbol
 declare const cueIndexBrand: unique symbol
+declare const trackIdBrand: unique symbol
 
 export type CueId = string & { readonly [cueIdBrand]: 'CueId' }
 export type TimelinePosition = number & {
   readonly [timelinePositionBrand]: 'TimelinePosition'
 }
 export type CueIndex = number & { readonly [cueIndexBrand]: 'CueIndex' }
+export type TrackId = string & { readonly [trackIdBrand]: 'TrackId' }
 
 export const asCueId = (value: string): CueId => value as CueId
 export const asTimelinePosition = (value: number): TimelinePosition =>
   value as TimelinePosition
 export const asCueIndex = (value: number): CueIndex => value as CueIndex
+export const asTrackId = (value: string): TrackId => value as TrackId
 
 export type Cue = {
   id: CueId
@@ -32,6 +35,24 @@ export type Alignment = {
   marks: Array<Mark>
   ranges?: Array<CueRange>
 }
+
+export type CueTrack<TCue extends Cue = Cue> = {
+  id: TrackId
+  cues: ReadonlyArray<TCue>
+}
+
+export type TrackAlignment = {
+  trackId: TrackId
+  marks: Array<Mark>
+  ranges?: Array<CueRange>
+}
+
+export type MultiTrackAlignment = {
+  version: 2
+  tracks: Array<TrackAlignment>
+}
+
+export type AlignmentDocument = Alignment | MultiTrackAlignment
 
 export type MarkHistoryEntry = {
   type: 'mark'
@@ -54,4 +75,9 @@ export type AlignmentState = {
   rangeEndsByCueId: ReadonlyMap<CueId, TimelinePosition>
   currentIndex: CueIndex
   history: ReadonlyArray<AlignmentHistoryEntry>
+}
+
+export type MultiTrackAlignmentState = {
+  currentTrackId: TrackId
+  statesByTrackId: ReadonlyMap<TrackId, AlignmentState>
 }
