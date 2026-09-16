@@ -138,7 +138,8 @@ export type ValidateMultiTrackAlignmentError =
 
 export type CreateAlignmentStateError = ValidateAlignmentError
 export type CreateAlignmentSessionError = CreateAlignmentStateError
-export type CreateMultiTrackAlignmentStateError = ValidateMultiTrackAlignmentError
+export type CreateMultiTrackAlignmentStateError =
+  ValidateMultiTrackAlignmentError
 
 export type MarkCurrentError =
   | InvalidCueIndexError
