@@ -17,6 +17,7 @@ import { getAlignment } from './selectors'
 import { createAlignmentState } from './state'
 import type {
   Alignment,
+  AlignmentState,
   Cue,
   CueTrack,
   MultiTrackAlignment,
@@ -154,7 +155,7 @@ export const createMultiTrackAlignmentState = <TCue extends Cue>(
     return Result.fail(new UnknownTrackIdError({ trackId: currentTrackId }))
   }
 
-  const statesByTrackId = new Map<TrackId, MultiTrackAlignmentState['statesByTrackId'] extends ReadonlyMap<TrackId, infer TState> ? TState : never>()
+  const statesByTrackId = new Map<TrackId, AlignmentState>()
 
   for (const track of tracks) {
     const stateResult = createAlignmentState({
@@ -200,7 +201,9 @@ export const getMultiTrackAlignment = <TCue extends Cue>(
       return []
     }
 
-    return [alignmentToTrackAlignment(track.id, getAlignment(trackState, track.cues))]
+    return [
+      alignmentToTrackAlignment(track.id, getAlignment(trackState, track.cues)),
+    ]
   }),
 })
 
