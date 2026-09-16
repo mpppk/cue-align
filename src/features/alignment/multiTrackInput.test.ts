@@ -57,7 +57,9 @@ describe('multi-track input', () => {
         tracks,
         '{"version":2,"tracks":[{"trackId":"missing","marks":[]}]}',
       )
-      expect(alignmentResult).toBeFailure(UnknownTrackIdError)
+      expect(alignmentResult).toBeFailure((error) => {
+        expect(error).toBeInstanceOf(UnknownTrackIdError)
+      })
     })
   })
 })
