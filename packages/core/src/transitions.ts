@@ -1,11 +1,13 @@
 import { Result } from '@praha/byethrow'
 
 import {
+  CueNotMarkedError,
   InvalidCueIndexError,
   NonMonotonicTimeError,
   UnknownCueIdError,
 } from './errors'
 import type {
+  AdjustMarkError,
   InvalidTimeError,
   MarkCurrentError,
   MarkError,
@@ -115,6 +117,24 @@ export const mark = <TCue extends Cue>(
   const index = cues.findIndex((cue) => cue.id === cueId)
   if (index === -1) {
     return Result.fail(new UnknownCueIdError({ cueId }))
+  }
+
+  return markAtKnownIndex(state, cues, asCueIndex(index), at, false)
+}
+
+export const adjustMark = <TCue extends Cue>(
+  state: AlignmentState,
+  cues: ReadonlyArray<TCue>,
+  cueId: CueId,
+  at: TimelinePosition,
+): Result.Result<AlignmentState, AdjustMarkError> => {
+  const index = cues.findIndex((cue) => cue.id === cueId)
+  if (index === -1) {
+    return Result.fail(new UnknownCueIdError({ cueId }))
+  }
+
+  if (!state.marksByCueId.has(cueId)) {
+    return Result.fail(new CueNotMarkedError({ cueId }))
   }
 
   return markAtKnownIndex(state, cues, asCueIndex(index), at, false)

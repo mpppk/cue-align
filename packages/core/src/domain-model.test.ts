@@ -2,6 +2,7 @@ import { Result } from '@praha/byethrow'
 import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
 import {
+  CueNotMarkedError,
   DuplicateCueIdError,
   InvalidCueIndexError,
   NonMonotonicTimeError,
@@ -12,6 +13,7 @@ import { createAlignmentState } from './state'
 import { markCurrent } from './transitions'
 import { asCueId, asCueIndex, asTimelinePosition } from './types'
 import type {
+  AdjustMarkError,
   CreateAlignmentSessionError,
   CreateAlignmentStateError,
   Cue,
@@ -87,6 +89,9 @@ describe('alignment domain model', () => {
     expectTypeOf(session.mark(ids.a, position(1))).toEqualTypeOf<
       Result.Result<void, MarkError>
     >()
+    expectTypeOf(session.adjustMark(ids.a, position(1))).toEqualTypeOf<
+      Result.Result<void, AdjustMarkError>
+    >()
     expectTypeOf(session.seekCue(ids.a)).toEqualTypeOf<
       Result.Result<void, SeekCueError>
     >()
@@ -157,6 +162,50 @@ describe('alignment domain model', () => {
     expect(session.mark(ids.b, position(25))).toBeSuccess()
 
     expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 25 })
+  })
+
+  it('requires an existing Mark for adjustment', () => {
+    const session = unwrapSession(createAlignmentSession({ cues }))
+
+    expect(session.adjustMark(ids.b, position(12))).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(CueNotMarkedError)
+    })
+    expect(session.getMark(ids.b)).toBeUndefined()
+  })
+
+  it('adjusts an existing Mark, preserves it across resume, and supports undo', () => {
+    const session = unwrapSession(createAlignmentSession({ cues }))
+
+    expect(session.mark(ids.a, position(10))).toBeSuccess()
+    expect(session.mark(ids.b, position(20))).toBeSuccess()
+    expect(session.mark(ids.c, position(30))).toBeSuccess()
+    expect(session.adjustMark(ids.b, position(22.345))).toBeSuccess()
+    expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 22.345 })
+
+    const exported = session.getAlignment()
+    const resumed = unwrapSession(
+      createAlignmentSession({
+        cues,
+        alignment: exported,
+      }),
+    )
+    expect(resumed.getMark(ids.b)).toEqual({ cueId: 'b', at: 22.345 })
+
+    expect(session.undo()).toBe(true)
+    expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 20 })
+  })
+
+  it('rejects an adjustment that violates ordering without changing the Mark', () => {
+    const session = unwrapSession(createAlignmentSession({ cues }))
+
+    expect(session.mark(ids.a, position(10))).toBeSuccess()
+    expect(session.mark(ids.b, position(20))).toBeSuccess()
+    expect(session.mark(ids.c, position(30))).toBeSuccess()
+
+    expect(session.adjustMark(ids.b, position(31))).toBeFailure((error) => {
+      expect(error).toBeInstanceOf(NonMonotonicTimeError)
+    })
+    expect(session.getMark(ids.b)).toEqual({ cueId: 'b', at: 20 })
   })
 
   it('undoes mark mutations and restores the previous cursor', () => {

@@ -1,4 +1,9 @@
-import type { KeyboardEvent, MouseEvent } from 'react'
+import { useRef, useState } from 'react'
+import type {
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react'
 
 import type { Alignment, CueId } from '@mpppk/cue-align-core'
 import { useWaveform } from '../useWaveform'
@@ -15,6 +20,12 @@ type WaveformReviewProps = {
   currentTime: number
   onSeek: (at: number) => void
   onSelectCue: (cueId: CueId) => void
+  onAdjustMark: (cueId: CueId, at: number) => void
+}
+
+type DragPreview = {
+  cueId: CueId
+  at: number
 }
 
 const formatSeconds = (seconds: number): string => `${seconds.toFixed(3)}s`
@@ -26,8 +37,12 @@ export function WaveformReview({
   currentTime,
   onSeek,
   onSelectCue,
+  onAdjustMark,
 }: WaveformReviewProps) {
   const waveform = useWaveform(file)
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const didDragRef = useRef(false)
+  const [dragPreview, setDragPreview] = useState<DragPreview>()
 
   if (waveform.status === 'loading') {
     return (
@@ -54,15 +69,22 @@ export function WaveformReview({
   const marks = getWaveformMarkPositions(alignment, duration)
   const currentRatio = waveformRatio(currentTime, duration)
 
-  const seekFromPointer = (event: MouseEvent<HTMLDivElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect()
-    onSeek(
-      timelinePositionFromWaveformOffset(
-        event.clientX - bounds.left,
-        bounds.width,
-        duration,
-      ),
+  const positionFromClientX = (clientX: number): number => {
+    const surface = surfaceRef.current
+    if (surface === null) {
+      return 0
+    }
+
+    const bounds = surface.getBoundingClientRect()
+    return timelinePositionFromWaveformOffset(
+      clientX - bounds.left,
+      bounds.width,
+      duration,
     )
+  }
+
+  const seekFromPointer = (event: MouseEvent<HTMLDivElement>) => {
+    onSeek(positionFromClientX(event.clientX))
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -90,6 +112,50 @@ export function WaveformReview({
     onSeek(Math.min(duration, Math.max(0, nextTime)))
   }
 
+  const beginDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    cueId: CueId,
+    at: number,
+  ) => {
+    event.stopPropagation()
+    didDragRef.current = false
+    event.currentTarget.setPointerCapture(event.pointerId)
+    onSelectCue(cueId)
+    setDragPreview({ cueId, at })
+  }
+
+  const updateDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    cueId: CueId,
+    originalAt: number,
+  ) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return
+    }
+
+    const at = positionFromClientX(event.clientX)
+    if (Math.abs(at - originalAt) >= 0.001) {
+      didDragRef.current = true
+    }
+    setDragPreview({ cueId, at })
+  }
+
+  const finishDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    cueId: CueId,
+  ) => {
+    event.stopPropagation()
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+
+    const preview = dragPreview
+    if (didDragRef.current && preview?.cueId === cueId) {
+      onAdjustMark(cueId, preview.at)
+    }
+    setDragPreview(undefined)
+  }
+
   return (
     <section className="waveform-review" aria-label="Waveform review">
       <div className="waveform-heading">
@@ -100,6 +166,7 @@ export function WaveformReview({
       </div>
 
       <div
+        ref={surfaceRef}
         className="waveform-surface"
         role="slider"
         tabIndex={0}
@@ -122,21 +189,35 @@ export function WaveformReview({
           ))}
         </div>
 
-        {marks.map((mark) => (
-          <button
-            key={mark.cueId}
-            className={`waveform-mark${mark.cueId === currentCueId ? ' current-waveform-mark' : ''}`}
-            type="button"
-            style={{ left: `${mark.ratio * 100}%` }}
-            aria-label={`Cue ${mark.cueId} at ${formatSeconds(mark.at)}`}
-            title={`${mark.cueId} · ${formatSeconds(mark.at)}`}
-            onClick={(event) => {
-              event.stopPropagation()
-              onSelectCue(mark.cueId)
-              onSeek(mark.at)
-            }}
-          />
-        ))}
+        {marks.map((mark) => {
+          const previewAt =
+            dragPreview?.cueId === mark.cueId ? dragPreview.at : mark.at
+          const previewRatio = waveformRatio(previewAt, duration)
+
+          return (
+            <button
+              key={mark.cueId}
+              className={`waveform-mark${mark.cueId === currentCueId ? ' current-waveform-mark' : ''}${dragPreview?.cueId === mark.cueId ? ' dragging-waveform-mark' : ''}`}
+              type="button"
+              style={{ left: `${previewRatio * 100}%` }}
+              aria-label={`Cue ${mark.cueId} at ${formatSeconds(previewAt)}. Drag to adjust.`}
+              title={`${mark.cueId} · ${formatSeconds(previewAt)}`}
+              onPointerDown={(event) => beginDrag(event, mark.cueId, mark.at)}
+              onPointerMove={(event) => updateDrag(event, mark.cueId, mark.at)}
+              onPointerUp={(event) => finishDrag(event, mark.cueId)}
+              onPointerCancel={() => setDragPreview(undefined)}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (didDragRef.current) {
+                  didDragRef.current = false
+                  return
+                }
+                onSelectCue(mark.cueId)
+                onSeek(mark.at)
+              }}
+            />
+          )
+        })}
 
         <span
           className="waveform-playhead"
@@ -146,8 +227,8 @@ export function WaveformReview({
       </div>
 
       <p className="waveform-help">
-        波形をクリックして seek。Mark をクリックすると対応する Cue
-        を選択します。
+        波形をクリックして seek。Mark はクリックで選択、ドラッグで timing
+        を微調整できます。
       </p>
     </section>
   )
