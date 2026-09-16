@@ -1,4 +1,4 @@
-import { Result } from '@praha/byethrow'
+import type { Result } from '@praha/byethrow'
 
 import type {
   CueId,
