@@ -26,6 +26,7 @@ import {
 import type { AutosaveSnapshot, RecoveredAuthoringSession } from '../autosave'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'
+import { PlaybackToggleError } from '../playback'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
 import { CueList } from './CueList'
 import { CueViewer } from './CueViewer'
@@ -104,6 +105,7 @@ function ReadyEditor({
   const [authoringMode, setAuthoringMode] =
     useState<AuthoringMode>('sequential')
   const [exportError, setExportError] = useState<AlignmentExportError>()
+  const [playbackError, setPlaybackError] = useState<PlaybackToggleError>()
   const [interactionError, setInteractionError] =
     useState<EditorInteractionError>()
   const [autosaveError, setAutosaveError] = useState<Error>()
@@ -162,13 +164,38 @@ function ReadyEditor({
           session.currentCue?.id,
           at,
         ),
+      togglePlayback: () => {
+        const media = mediaRef.current
+        if (media === null) {
+          return
+        }
+
+        if (media.paused) {
+          media.play().then(
+            () => {
+              setPlaybackError(undefined)
+            },
+            (cause: unknown) => {
+              setPlaybackError(new PlaybackToggleError({ cause }))
+            },
+          )
+          return
+        }
+
+        media.pause()
+        setPlaybackError(undefined)
+      },
       undo: session.undo,
       goToPreviousCue: session.goToPreviousCue,
       goToNextCue: session.goToNextCue,
     },
   })
   const visibleError =
-    shortcutError ?? interactionError ?? exportError ?? autosaveError
+    shortcutError ??
+    playbackError ??
+    interactionError ??
+    exportError ??
+    autosaveError
   const mediaKind = getMediaKind(mediaFile)
   const isComplete = session.totalCount > 0 && session.isComplete
 
@@ -303,8 +330,8 @@ function ReadyEditor({
         </div>
         <p>
           {authoringMode === 'sequential'
-            ? 'Space で Mark すると次の Cue へ進みます。'
-            : '選択中の Cue を Space で Mark / re-mark します。'}
+            ? 'Enter で Mark すると次の Cue へ進みます。'
+            : '選択中の Cue を Enter で Mark / re-mark します。'}
         </p>
       </div>
 

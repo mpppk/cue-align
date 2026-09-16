@@ -6,10 +6,16 @@ import { asTimelinePosition } from '@mpppk/cue-align-core'
 import type { TimelinePosition } from '@mpppk/cue-align-core'
 import type { AuthoringMarkError } from './authoringMode'
 
-type AlignmentShortcut = 'mark-current' | 'undo' | 'previous-cue' | 'next-cue'
+type AlignmentShortcut =
+  | 'mark-current'
+  | 'toggle-playback'
+  | 'undo'
+  | 'previous-cue'
+  | 'next-cue'
 
 export type AlignmentShortcutActions = {
   mark: (at: TimelinePosition) => Result.Result<void, AuthoringMarkError>
+  togglePlayback: () => void
   undo: () => boolean
   goToPreviousCue: () => void
   goToNextCue: () => void
@@ -49,8 +55,10 @@ const resolveAlignmentShortcut = (
   code: KeyboardEvent['code'],
 ): AlignmentShortcut | undefined => {
   switch (code) {
-    case 'Space':
+    case 'Enter':
       return 'mark-current'
+    case 'Space':
+      return 'toggle-playback'
     case 'Backspace':
       return 'undo'
     case 'ArrowLeft':
@@ -93,6 +101,14 @@ export const handleAlignmentShortcut = (
         return Result.fail(result.error)
       }
 
+      return Result.succeed(true)
+    }
+    case 'toggle-playback': {
+      if (media === null) {
+        return Result.succeed(false)
+      }
+
+      actions.togglePlayback()
       return Result.succeed(true)
     }
     case 'undo':
