@@ -3,9 +3,11 @@ import { useRef, useState } from 'react'
 
 import {
   adjustMark,
+  clearRangeEnd,
   getAlignment,
   getCurrentCue,
   getMark,
+  getRange,
   isComplete,
   mark,
   markCurrent,
@@ -13,20 +15,24 @@ import {
   previousCue as previousCueTransition,
   seekCue,
   seekIndex,
+  setRangeEnd,
   undo,
 } from '@mpppk/cue-align-core'
 import type {
   AdjustMarkError,
   Alignment,
   AlignmentState,
+  ClearRangeEndError,
   Cue,
   CueId,
   CueIndex,
+  CueRange,
   Mark,
   MarkCurrentError,
   MarkError,
   SeekCueError,
   SeekIndexError,
+  SetRangeEndError,
   TimelinePosition,
 } from '@mpppk/cue-align-core'
 
@@ -36,6 +42,7 @@ export type AlignmentSessionSnapshot<TCue extends Cue> = {
   nextCue: TCue | undefined
   currentIndex: CueIndex
   currentMark: Mark | undefined
+  currentRange: CueRange | undefined
   alignment: Alignment
   markedCount: number
   totalCount: number
@@ -57,6 +64,8 @@ export const getAlignmentSessionSnapshot = <TCue extends Cue>(
     currentIndex: state.currentIndex,
     currentMark:
       currentCue === undefined ? undefined : getMark(state, currentCue.id),
+    currentRange:
+      currentCue === undefined ? undefined : getRange(state, currentCue.id),
     alignment: getAlignment(state, cues),
     markedCount: state.marksByCueId.size,
     totalCount: cues.length,
@@ -72,6 +81,13 @@ export type AlignmentSessionController<TCue extends Cue> =
       cueId: CueId,
       at: TimelinePosition,
     ) => Result.Result<void, AdjustMarkError>
+    setRangeEnd: (
+      cueId: CueId,
+      end: TimelinePosition,
+    ) => Result.Result<void, SetRangeEndError>
+    clearRangeEnd: (
+      cueId: CueId,
+    ) => Result.Result<void, ClearRangeEndError>
     undo: () => boolean
     seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
     seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
@@ -115,6 +131,24 @@ export const useAlignmentSession = <TCue extends Cue>(
     },
     adjustMark: (cueId, at) => {
       const result = adjustMark(stateRef.current, cues, cueId, at)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      commit(result.value)
+      return Result.succeed(undefined)
+    },
+    setRangeEnd: (cueId, end) => {
+      const result = setRangeEnd(stateRef.current, cues, cueId, end)
+      if (Result.isFailure(result)) {
+        return Result.fail(result.error)
+      }
+
+      commit(result.value)
+      return Result.succeed(undefined)
+    },
+    clearRangeEnd: (cueId) => {
+      const result = clearRangeEnd(stateRef.current, cues, cueId)
       if (Result.isFailure(result)) {
         return Result.fail(result.error)
       }
