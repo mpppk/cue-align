@@ -127,7 +127,10 @@ export type CreateMultiTrackAlignmentStateOptions<TCue extends Cue> = {
 
 export const createMultiTrackAlignmentState = <TCue extends Cue>(
   options: CreateMultiTrackAlignmentStateOptions<TCue>,
-): Result.Result<MultiTrackAlignmentState, CreateMultiTrackAlignmentStateError> => {
+): Result.Result<
+  MultiTrackAlignmentState,
+  CreateMultiTrackAlignmentStateError
+> => {
   const { tracks, alignment, initialTrackId } = options
 
   let alignmentsByTrackId: ReadonlyMap<TrackId, Alignment>
