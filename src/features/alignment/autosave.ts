@@ -119,7 +119,7 @@ const toCueInput = (authoring: AuthoringInput): JsonValue => ({
   tracks: authoring.tracks.map((track) => ({
     id: track.id,
     ...(track.label === undefined ? {} : { label: track.label }),
-    cues: track.cues,
+    cues: track.cues.map((cue) => ({ ...cue })),
   })),
 })
 
