@@ -48,9 +48,7 @@ describe('readAuthoringInput', () => {
         tracks: [
           {
             trackId: asTrackId('default'),
-            marks: [
-              { cueId: asCueId('a'), at: asTimelinePosition(1.5) },
-            ],
+            marks: [{ cueId: asCueId('a'), at: asTimelinePosition(1.5) }],
           },
         ],
       }
