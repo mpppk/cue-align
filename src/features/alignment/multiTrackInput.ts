@@ -22,17 +22,9 @@ import {
   InvalidAlignmentInputError,
   InvalidCueInputError,
 } from './errors'
-import type {
-  ParseAlignmentInputError,
-  ParseCueInputError,
-} from './errors'
+import type { ParseAlignmentInputError, ParseCueInputError } from './errors'
 import { parseAlignmentInput, parseCueInput } from './input'
-import type {
-  JsonObject,
-  JsonValue,
-  ReferenceCue,
-  TextFile,
-} from './input'
+import type { JsonObject, JsonValue, ReferenceCue, TextFile } from './input'
 
 export const DEFAULT_TRACK_ID = asTrackId('default')
 
@@ -319,5 +311,4 @@ export const readAlignmentDocumentFile = (
 export const getTrackById = (
   tracks: ReadonlyArray<ReferenceTrack>,
   trackId: TrackId,
-): ReferenceTrack | undefined =>
-  tracks.find((track) => track.id === trackId)
+): ReferenceTrack | undefined => tracks.find((track) => track.id === trackId)
