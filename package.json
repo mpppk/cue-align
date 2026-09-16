@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vp dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vp build",
+    "build": "vp -C packages/core pack && vp -C packages/react pack && vp -C packages/remotion pack && vp build",
     "preview": "vp preview",
     "lint": "vp lint",
     "format": "vp fmt . && vp lint --fix",
