@@ -55,3 +55,17 @@ _Avoid_: Timestamp a Cue, Sync a Cue, Set Timing
 **Align a Cue Sequence**:
 Cue を順に mark して Alignment を作成または修正すること。自動処理か手動操作かはこの語では区別しない。
 _Avoid_: Synchronize, Timecode
+
+## Multiple tracks
+
+**Track**:
+同じ Timeline を共有しながら、他の列とは独立して align される Cue Sequence の所有単位。歌詞と scene change のように、1つの media clock に複数の Cue Sequence を重ねる場合に使用する。
+
+**Track ID**:
+Track を一意に識別する安定した識別子。Track ID は空文字列を許可せず、1つの multi-track document 内で一意でなければならない。
+
+Cue ID の一意性は Track 内に限定する。異なる Track が同じ Cue ID を持つことは許可し、multi-track context における Cue identity は `(trackId, cueId)` の組で定義する。
+
+各 Track は独立した Cue order、Mark、explicit range、current Cue、undo history を持つ。Track switching は共有 Timeline の再生位置を変更せず、選択した Track の authoring state だけを current context に切り替える。
+
+既存 single-track Alignment `{ version: 1, marks, ranges? }` は引き続き canonical single-track format として受理する。複数 Track を永続化するときは additive な container format `{ version: 2, tracks: [...] }` を使用し、各 track entry は `trackId` と v1 と同じ `marks` / `ranges` semantics を持つ。Reference app は single-track の export では v1 format を維持し、複数 Track のときだけ v2 container を出力する。

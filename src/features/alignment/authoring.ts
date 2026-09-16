@@ -1,31 +1,37 @@
 import { Result } from '@praha/byethrow'
 
-import type { Alignment } from '@mpppk/cue-align-core'
-import type { ReadAlignmentFileError, ReadCueFileError } from './errors'
-import { readAlignmentFile, readCueFile } from './input'
-import type { ReferenceCue, TextFile } from './input'
+import type { MultiTrackAlignment } from '@mpppk/cue-align-core'
+import { readAlignmentDocumentFile, readCueTracksFile } from './multiTrackInput'
+import type {
+  ReadAlignmentDocumentFileError,
+  ReadCueTracksFileError,
+  ReferenceTrack,
+} from './multiTrackInput'
+import type { TextFile } from './input'
 
 export type AuthoringInput = {
-  cues: ReadonlyArray<ReferenceCue>
-  alignment?: Alignment
+  tracks: ReadonlyArray<ReferenceTrack>
+  alignment?: MultiTrackAlignment
 }
 
-export type ReadAuthoringInputError = ReadCueFileError | ReadAlignmentFileError
+export type ReadAuthoringInputError =
+  | ReadCueTracksFileError
+  | ReadAlignmentDocumentFileError
 
 export const readAuthoringInput = (
   cueFile: TextFile,
   alignmentFile?: TextFile,
 ): Result.ResultAsync<AuthoringInput, ReadAuthoringInputError> =>
   Result.pipe(
-    readCueFile(cueFile),
-    Result.andThen((cues) => {
+    readCueTracksFile(cueFile),
+    Result.andThen((tracks) => {
       if (alignmentFile === undefined) {
-        return Result.succeed({ cues })
+        return Result.succeed({ tracks })
       }
 
       return Result.pipe(
-        readAlignmentFile(cues, alignmentFile),
-        Result.map((alignment) => ({ cues, alignment })),
+        readAlignmentDocumentFile(tracks, alignmentFile),
+        Result.map((alignment) => ({ tracks, alignment })),
       )
     }),
   )

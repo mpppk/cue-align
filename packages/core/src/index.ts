@@ -1,4 +1,5 @@
 export * from './errors'
+export * from './multiTrack'
 export * from './proposal'
 export * from './selectors'
 export * from './session'
