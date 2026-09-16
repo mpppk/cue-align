@@ -131,7 +131,9 @@ export const useMultiTrackAlignmentSession = <TCue extends Cue>(
   return {
     ...snapshot,
     markCurrent: (at) =>
-      updateCurrentTrack((trackState, cues) => markCurrent(trackState, cues, at)),
+      updateCurrentTrack((trackState, cues) =>
+        markCurrent(trackState, cues, at),
+      ),
     mark: (cueId, at) =>
       updateCurrentTrack((trackState, cues) =>
         mark(trackState, cues, cueId, at),
@@ -183,7 +185,10 @@ export const useMultiTrackAlignmentSession = <TCue extends Cue>(
       const currentState = stateRef.current
       const current = getCurrentTrackContext(currentState, tracks)
       const statesByTrackId = new Map(currentState.statesByTrackId)
-      statesByTrackId.set(current.track.id, previousCueTransition(current.state))
+      statesByTrackId.set(
+        current.track.id,
+        previousCueTransition(current.state),
+      )
       commit({ ...currentState, statesByTrackId })
     },
     selectTrack: (trackId) => {
