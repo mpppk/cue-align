@@ -29,14 +29,16 @@ const partialProvider: AlignmentProposalProvider<
   { mediaId: string },
   TestProviderError
 > = {
-  propose: async () =>
-    Result.succeed({
-      version: 1,
-      marks: [
-        { cueId: 'a', at: 1.25 },
-        { cueId: 'c', at: 4.5 },
-      ],
-    }),
+  propose: () =>
+    Promise.resolve(
+      Result.succeed({
+        version: 1,
+        marks: [
+          { cueId: 'a', at: 1.25 },
+          { cueId: 'c', at: 4.5 },
+        ],
+      }),
+    ),
 }
 
 describe('alignment proposals', () => {
@@ -113,7 +115,7 @@ describe('alignment proposals', () => {
 
   it('preserves typed provider failures', async () => {
     const provider: AlignmentProposalProvider<void, TestProviderError> = {
-      propose: async () => Result.fail(new TestProviderError()),
+      propose: () => Promise.resolve(Result.fail(new TestProviderError())),
     }
 
     const result = await requestAlignmentProposal(cues, provider, undefined)
