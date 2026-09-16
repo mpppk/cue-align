@@ -3,16 +3,19 @@ import { Result } from '@praha/byethrow'
 import {
   CueNotMarkedError,
   InvalidCueIndexError,
+  InvalidRangeError,
   NonMonotonicTimeError,
   UnknownCueIdError,
 } from './errors'
 import type {
   AdjustMarkError,
+  ClearRangeEndError,
   InvalidTimeError,
   MarkCurrentError,
   MarkError,
   SeekCueError,
   SeekIndexError,
+  SetRangeEndError,
 } from './errors'
 import { asCueIndex } from './types'
 import type {
@@ -22,9 +25,12 @@ import type {
   CueIndex,
   TimelinePosition,
 } from './types'
-import { validateTime } from './validation'
+import { validateRangeEnd, validateTime } from './validation'
 
-type MarkKnownIndexError = InvalidTimeError | NonMonotonicTimeError
+type MarkKnownIndexError =
+  | InvalidTimeError
+  | InvalidRangeError
+  | NonMonotonicTimeError
 
 const markAtKnownIndex = <TCue extends Cue>(
   state: AlignmentState,
@@ -71,6 +77,11 @@ const markAtKnownIndex = <TCue extends Cue>(
     )
   }
 
+  const end = state.rangeEndsByCueId.get(cue.id)
+  if (end !== undefined && at > end) {
+    return Result.fail(new InvalidRangeError({ cueId: cue.id, start: at, end }))
+  }
+
   const marksByCueId = new Map(state.marksByCueId)
   const previousAt = marksByCueId.get(cue.id)
   marksByCueId.set(cue.id, at)
@@ -81,6 +92,7 @@ const markAtKnownIndex = <TCue extends Cue>(
       : state.currentIndex
 
   return Result.succeed({
+    ...state,
     marksByCueId,
     currentIndex: nextCursorIndex,
     history: [
@@ -140,6 +152,77 @@ export const adjustMark = <TCue extends Cue>(
   return markAtKnownIndex(state, cues, asCueIndex(index), at, false)
 }
 
+export const setRangeEnd = <TCue extends Cue>(
+  state: AlignmentState,
+  cues: ReadonlyArray<TCue>,
+  cueId: CueId,
+  end: TimelinePosition,
+): Result.Result<AlignmentState, SetRangeEndError> => {
+  if (!cues.some((cue) => cue.id === cueId)) {
+    return Result.fail(new UnknownCueIdError({ cueId }))
+  }
+
+  const start = state.marksByCueId.get(cueId)
+  if (start === undefined) {
+    return Result.fail(new CueNotMarkedError({ cueId }))
+  }
+
+  const rangeValidation = validateRangeEnd(cueId, start, end)
+  if (Result.isFailure(rangeValidation)) {
+    return Result.fail(rangeValidation.error)
+  }
+
+  const rangeEndsByCueId = new Map(state.rangeEndsByCueId)
+  const previousEnd = rangeEndsByCueId.get(cueId)
+  rangeEndsByCueId.set(cueId, end)
+
+  return Result.succeed({
+    ...state,
+    rangeEndsByCueId,
+    history: [
+      ...state.history,
+      {
+        type: 'range',
+        cueId,
+        previousEnd,
+        previousCursorIndex: state.currentIndex,
+      },
+    ],
+  })
+}
+
+export const clearRangeEnd = <TCue extends Cue>(
+  state: AlignmentState,
+  cues: ReadonlyArray<TCue>,
+  cueId: CueId,
+): Result.Result<AlignmentState, ClearRangeEndError> => {
+  if (!cues.some((cue) => cue.id === cueId)) {
+    return Result.fail(new UnknownCueIdError({ cueId }))
+  }
+
+  const previousEnd = state.rangeEndsByCueId.get(cueId)
+  if (previousEnd === undefined) {
+    return Result.succeed(state)
+  }
+
+  const rangeEndsByCueId = new Map(state.rangeEndsByCueId)
+  rangeEndsByCueId.delete(cueId)
+
+  return Result.succeed({
+    ...state,
+    rangeEndsByCueId,
+    history: [
+      ...state.history,
+      {
+        type: 'range',
+        cueId,
+        previousEnd,
+        previousCursorIndex: state.currentIndex,
+      },
+    ],
+  })
+}
+
 export type UndoResult = {
   state: AlignmentState
   undone: boolean
@@ -151,16 +234,36 @@ export const undo = (state: AlignmentState): UndoResult => {
     return { state, undone: false }
   }
 
-  const marksByCueId = new Map(state.marksByCueId)
-  if (entry.previousAt === undefined) {
-    marksByCueId.delete(entry.cueId)
+  if (entry.type === 'mark') {
+    const marksByCueId = new Map(state.marksByCueId)
+    if (entry.previousAt === undefined) {
+      marksByCueId.delete(entry.cueId)
+    } else {
+      marksByCueId.set(entry.cueId, entry.previousAt)
+    }
+
+    return {
+      state: {
+        ...state,
+        marksByCueId,
+        currentIndex: entry.previousCursorIndex,
+        history: state.history.slice(0, -1),
+      },
+      undone: true,
+    }
+  }
+
+  const rangeEndsByCueId = new Map(state.rangeEndsByCueId)
+  if (entry.previousEnd === undefined) {
+    rangeEndsByCueId.delete(entry.cueId)
   } else {
-    marksByCueId.set(entry.cueId, entry.previousAt)
+    rangeEndsByCueId.set(entry.cueId, entry.previousEnd)
   }
 
   return {
     state: {
-      marksByCueId,
+      ...state,
+      rangeEndsByCueId,
       currentIndex: entry.previousCursorIndex,
       history: state.history.slice(0, -1),
     },
