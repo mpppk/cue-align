@@ -69,3 +69,16 @@ Cue ID の一意性は Track 内に限定する。異なる Track が同じ Cue 
 各 Track は独立した Cue order、Mark、explicit range、current Cue、undo history を持つ。Track switching は共有 Timeline の再生位置を変更せず、選択した Track の authoring state だけを current context に切り替える。
 
 既存 single-track Alignment `{ version: 1, marks, ranges? }` は引き続き canonical single-track format として受理する。複数 Track を永続化するときは additive な container format `{ version: 2, tracks: [...] }` を使用し、各 track entry は `trackId` と v1 と同じ `marks` / `ranges` semantics を持つ。Reference app は single-track の export では v1 format を維持し、複数 Track のときだけ v2 container を出力する。
+
+## Projects (Reference app)
+
+**Project**:
+Cue document・media・Alignment をひとまとまりとして保存し、後から選択してそのまま編集を再開できる Reference app 固有の aggregate。Core domain model には含めない。
+_Avoid_: Session, Workspace, Library Item
+
+**Project ID**:
+Project を一意に識別する安定した識別子。Project 名は重複を許可する。
+
+Project は metadata（name / createdAt / updatedAt）、version 2 track container に正規化した Cue input、Blob と file metadata を持つ media、version 2 multi-track form の current Alignment、recovery state（currentTrackId / currentCueId）を所有する。保存済み Project は明示的に削除されるまで expire させない。ただし browser storage は端末・origin ローカルであり、ブラウザ操作により消去され得る。
+
+旧 single local autosave は media bytes を持たないため完全な自動 migration はできない。legacy autosave を検出した場合は同じ media の再選択を求め、recovery 成功時に新しい Project として保存する。Project 作成 transaction が成功した後にだけ legacy autosave を削除する。
