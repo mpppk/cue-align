@@ -146,10 +146,6 @@ export const createMultiTrackAlignmentState = <TCue extends Cue>(
   }
 
   const firstTrack = tracks[0]
-  if (firstTrack === undefined) {
-    return Result.fail(new EmptyTrackListError())
-  }
-
   const currentTrackId = initialTrackId ?? firstTrack.id
   if (!tracks.some((track) => track.id === currentTrackId)) {
     return Result.fail(new UnknownTrackIdError({ trackId: currentTrackId }))
