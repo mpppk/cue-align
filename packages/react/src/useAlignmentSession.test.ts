@@ -26,7 +26,11 @@ describe('getAlignmentSessionSnapshot', () => {
       cues,
       alignment: {
         version: 1,
-        marks: [{ cueId: asCueId('a'), at: asTimelinePosition(1.5) }],
+        marks: [
+          { cueId: asCueId('a'), at: asTimelinePosition(1.5) },
+          { cueId: asCueId('b'), at: asTimelinePosition(2) },
+        ],
+        ranges: [{ cueId: asCueId('b'), end: asTimelinePosition(3) }],
       },
       initialCueId: asCueId('b'),
     })
@@ -37,8 +41,9 @@ describe('getAlignmentSessionSnapshot', () => {
       expect(snapshot.currentCue?.label).toBe('Beta')
       expect(snapshot.previousCue?.label).toBe('Alpha')
       expect(snapshot.nextCue?.label).toBe('Gamma')
-      expect(snapshot.currentMark).toBeUndefined()
-      expect(snapshot.markedCount).toBe(1)
+      expect(snapshot.currentMark).toEqual({ cueId: 'b', at: 2 })
+      expect(snapshot.currentRange).toEqual({ cueId: 'b', end: 3 })
+      expect(snapshot.markedCount).toBe(2)
       expect(snapshot.totalCount).toBe(3)
       expect(snapshot.isComplete).toBe(false)
     })
@@ -47,6 +52,7 @@ describe('getAlignmentSessionSnapshot', () => {
   it('preserves the concrete Cue type in the snapshot', () => {
     const state: AlignmentState = {
       marksByCueId: new Map(),
+      rangeEndsByCueId: new Map(),
       currentIndex: asCueIndex(0),
       history: [],
     }
