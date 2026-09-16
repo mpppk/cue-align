@@ -244,8 +244,7 @@ export const parseAlignmentDocumentInput = (
   }
 
   if (value.version === 1) {
-    const track = tracks[0]
-    if (tracks.length !== 1 || track === undefined) {
+    if (tracks.length !== 1) {
       return Result.fail(
         new InvalidAlignmentInputError({
           path: '$.version',
@@ -254,6 +253,7 @@ export const parseAlignmentDocumentInput = (
       )
     }
 
+    const track = tracks[0]
     const parsed = parseAlignmentInput(track.cues, value)
     if (Result.isFailure(parsed)) {
       return Result.fail(parsed.error)
