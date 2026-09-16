@@ -22,9 +22,15 @@ export type Mark = {
   at: TimelinePosition
 }
 
+export type CueRange = {
+  cueId: CueId
+  end: TimelinePosition
+}
+
 export type Alignment = {
   version: 1
   marks: Array<Mark>
+  ranges?: Array<CueRange>
 }
 
 export type MarkHistoryEntry = {
@@ -34,8 +40,18 @@ export type MarkHistoryEntry = {
   previousCursorIndex: CueIndex
 }
 
+export type RangeHistoryEntry = {
+  type: 'range'
+  cueId: CueId
+  previousEnd: TimelinePosition | undefined
+  previousCursorIndex: CueIndex
+}
+
+export type AlignmentHistoryEntry = MarkHistoryEntry | RangeHistoryEntry
+
 export type AlignmentState = {
   marksByCueId: ReadonlyMap<CueId, TimelinePosition>
+  rangeEndsByCueId: ReadonlyMap<CueId, TimelinePosition>
   currentIndex: CueIndex
-  history: ReadonlyArray<MarkHistoryEntry>
+  history: ReadonlyArray<AlignmentHistoryEntry>
 }
