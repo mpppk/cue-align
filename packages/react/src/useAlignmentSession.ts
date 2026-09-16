@@ -85,9 +85,7 @@ export type AlignmentSessionController<TCue extends Cue> =
       cueId: CueId,
       end: TimelinePosition,
     ) => Result.Result<void, SetRangeEndError>
-    clearRangeEnd: (
-      cueId: CueId,
-    ) => Result.Result<void, ClearRangeEndError>
+    clearRangeEnd: (cueId: CueId) => Result.Result<void, ClearRangeEndError>
     undo: () => boolean
     seekCue: (cueId: CueId) => Result.Result<void, SeekCueError>
     seekIndex: (index: CueIndex) => Result.Result<void, SeekIndexError>
