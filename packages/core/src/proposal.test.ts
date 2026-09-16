@@ -2,15 +2,9 @@ import { Result } from '@praha/byethrow'
 import { ErrorFactory } from '@praha/error-factory'
 import { describe, expect, expectTypeOf, it } from 'vite-plus/test'
 
-import {
-  InvalidAlignmentProposalError,
-  UnknownCueIdError,
-} from './errors'
+import { InvalidAlignmentProposalError, UnknownCueIdError } from './errors'
 import type { RequestAlignmentProposalError } from './errors'
-import {
-  parseAlignmentProposal,
-  requestAlignmentProposal,
-} from './proposal'
+import { parseAlignmentProposal, requestAlignmentProposal } from './proposal'
 import type { AlignmentProposalProvider } from './proposal'
 import { createAlignmentSession } from './session'
 import { asCueId, asTimelinePosition } from './types'
