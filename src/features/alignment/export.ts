@@ -1,18 +1,18 @@
 import { Result } from '@praha/byethrow'
 import { ErrorFactory } from '@praha/error-factory'
 
-import type { Alignment } from '@mpppk/cue-align-core'
+import type { AlignmentDocument } from '@mpppk/cue-align-core'
 
 export class AlignmentExportError extends ErrorFactory({
   name: 'AlignmentExportError',
   message: 'Failed to export Alignment JSON',
 }) {}
 
-export const serializeAlignment = (alignment: Alignment): string =>
+export const serializeAlignment = (alignment: AlignmentDocument): string =>
   `${JSON.stringify(alignment, null, 2)}\n`
 
 export const downloadAlignment = (
-  alignment: Alignment,
+  alignment: AlignmentDocument,
   filename = 'alignment.json',
 ): Result.Result<void, AlignmentExportError> =>
   Result.try({
