@@ -104,7 +104,10 @@ export const requestAlignmentProposal = <
   cues: ReadonlyArray<TCue>,
   provider: AlignmentProposalProvider<TInput, TProviderError>,
   input: TInput,
-): Result.ResultAsync<Alignment, RequestAlignmentProposalError<TProviderError>> =>
+): Result.ResultAsync<
+  Alignment,
+  RequestAlignmentProposalError<TProviderError>
+> =>
   Result.pipe(
     provider.propose(input),
     Result.andThen((proposal) => parseAlignmentProposal(cues, proposal)),
