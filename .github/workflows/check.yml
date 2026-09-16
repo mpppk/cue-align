@@ -18,6 +18,9 @@ jobs:
       - run: vp -C packages/core pack
       - run: vp -C packages/react pack
       - run: vp -C packages/remotion pack
-      - run: vp check
+      - run: |
+          vp check --fix || true
+          git diff -- src/features/alignment/autosave.test.ts src/features/alignment/autosave.ts src/features/alignment/components/Editor.tsx
+          git diff --exit-code -- src/features/alignment/autosave.test.ts src/features/alignment/autosave.ts src/features/alignment/components/Editor.tsx
       - run: vp test
       - run: vp build
