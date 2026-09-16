@@ -1,9 +1,10 @@
 import { Result } from '@praha/byethrow'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   asTimelinePosition,
   createMultiTrackAlignmentState,
+  seekCue,
 } from '@mpppk/cue-align-core'
 import type {
   AdjustMarkError,
@@ -17,6 +18,12 @@ import { useMultiTrackAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { markForAuthoringMode } from '../authoringMode'
 import type { AuthoringMode } from '../authoringMode'
+import {
+  createAutosaveScheduler,
+  getMediaIdentity,
+  saveAutosave,
+} from '../autosave'
+import type { AutosaveSnapshot, RecoveredAuthoringSession } from '../autosave'
 import { downloadAlignment } from '../export'
 import type { AlignmentExportError } from '../export'
 import { useAlignmentShortcuts } from '../useAlignmentShortcuts'
@@ -30,6 +37,7 @@ import { WaveformReview } from './WaveformReview'
 type EditorProps = {
   authoring: AuthoringInput
   mediaFile: File
+  recovery?: RecoveredAuthoringSession
   onBack: () => void
 }
 
@@ -47,6 +55,44 @@ const formatPlaybackTime = (seconds: number): string => {
     .padStart(6, '0')}`
 }
 
+const createEditorInitialState = (
+  authoring: AuthoringInput,
+  recovery?: RecoveredAuthoringSession,
+) => {
+  const initialStateResult = createMultiTrackAlignmentState({
+    tracks: authoring.tracks,
+    alignment: authoring.alignment,
+    ...(recovery === undefined
+      ? {}
+      : { initialTrackId: recovery.currentTrackId }),
+  })
+  if (
+    Result.isFailure(initialStateResult) ||
+    recovery?.currentCueId === undefined
+  ) {
+    return initialStateResult
+  }
+
+  const track = authoring.tracks.find(
+    (candidate) => candidate.id === recovery.currentTrackId,
+  )
+  const trackState = initialStateResult.value.statesByTrackId.get(
+    recovery.currentTrackId,
+  )
+  if (track === undefined || trackState === undefined) {
+    return initialStateResult
+  }
+
+  const seekResult = seekCue(trackState, track.cues, recovery.currentCueId)
+  if (Result.isFailure(seekResult)) {
+    return Result.fail(seekResult.error)
+  }
+
+  const statesByTrackId = new Map(initialStateResult.value.statesByTrackId)
+  statesByTrackId.set(track.id, seekResult.value)
+  return Result.succeed({ ...initialStateResult.value, statesByTrackId })
+}
+
 function ReadyEditor({
   authoring,
   mediaFile,
@@ -60,7 +106,52 @@ function ReadyEditor({
   const [exportError, setExportError] = useState<AlignmentExportError>()
   const [interactionError, setInteractionError] =
     useState<EditorInteractionError>()
+  const [autosaveError, setAutosaveError] = useState<Error>()
   const session = useMultiTrackAlignmentSession(authoring.tracks, initialState)
+  const alignmentFingerprint = JSON.stringify(session.multiTrackAlignment)
+  const autosaveScheduler = useMemo(
+    () =>
+      createAutosaveScheduler((snapshot: AutosaveSnapshot) => {
+        const result = saveAutosave(window.localStorage, snapshot)
+        if (Result.isFailure(result)) {
+          setAutosaveError(result.error)
+          return
+        }
+
+        setAutosaveError(undefined)
+      }),
+    [],
+  )
+
+  useEffect(() => {
+    autosaveScheduler.schedule({
+      authoring: {
+        tracks: authoring.tracks,
+        alignment: session.multiTrackAlignment,
+      },
+      media: getMediaIdentity(mediaFile),
+      currentTrackId: session.currentTrackId,
+      ...(session.currentCue === undefined
+        ? {}
+        : { currentCueId: session.currentCue.id }),
+    })
+  }, [
+    alignmentFingerprint,
+    authoring.tracks,
+    autosaveScheduler,
+    mediaFile,
+    session.currentCue,
+    session.currentTrackId,
+    session.multiTrackAlignment,
+  ])
+
+  useEffect(
+    () => () => {
+      autosaveScheduler.flush()
+    },
+    [autosaveScheduler],
+  )
+
   const shortcutError = useAlignmentShortcuts({
     mediaRef,
     actions: {
@@ -76,7 +167,8 @@ function ReadyEditor({
       goToNextCue: session.goToNextCue,
     },
   })
-  const visibleError = shortcutError ?? interactionError ?? exportError
+  const visibleError =
+    shortcutError ?? interactionError ?? exportError ?? autosaveError
   const mediaKind = getMediaKind(mediaFile)
   const isComplete = session.totalCount > 0 && session.isComplete
 
@@ -276,14 +368,15 @@ function ReadyEditor({
   )
 }
 
-export function Editor({ authoring, mediaFile, onBack }: EditorProps) {
+export function Editor({
+  authoring,
+  mediaFile,
+  recovery,
+  onBack,
+}: EditorProps) {
   const initialStateResult = useMemo(
-    () =>
-      createMultiTrackAlignmentState({
-        tracks: authoring.tracks,
-        alignment: authoring.alignment,
-      }),
-    [authoring.alignment, authoring.tracks],
+    () => createEditorInitialState(authoring, recovery),
+    [authoring, recovery],
   )
 
   if (Result.isFailure(initialStateResult)) {
@@ -304,6 +397,7 @@ export function Editor({ authoring, mediaFile, onBack }: EditorProps) {
     <ReadyEditor
       authoring={authoring}
       mediaFile={mediaFile}
+      recovery={recovery}
       onBack={onBack}
       initialState={initialStateResult.value}
     />
