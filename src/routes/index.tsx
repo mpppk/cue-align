@@ -23,6 +23,7 @@ function Home() {
       <Editor
         authoring={selection.authoring}
         mediaFile={selection.mediaFile}
+        recovery={selection.recovery}
         onBack={() => setSelection(undefined)}
       />
     </main>
