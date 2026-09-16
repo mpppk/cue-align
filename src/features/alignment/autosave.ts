@@ -16,7 +16,10 @@ export const AUTOSAVE_DEBOUNCE_MS = 750
 export const AUTOSAVE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const AUTOSAVE_FUTURE_TOLERANCE_MS = 5 * 60 * 1000
 
-export type AutosaveStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+export type AutosaveStorage = Pick<
+  Storage,
+  'getItem' | 'setItem' | 'removeItem'
+>
 
 export type MediaIdentity = {
   name: string
