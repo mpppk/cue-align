@@ -1,10 +1,7 @@
 import { Result } from '@praha/byethrow'
 
 import type { MultiTrackAlignment } from '@mpppk/cue-align-core'
-import {
-  readAlignmentDocumentFile,
-  readCueTracksFile,
-} from './multiTrackInput'
+import { readAlignmentDocumentFile, readCueTracksFile } from './multiTrackInput'
 import type {
   ReadAlignmentDocumentFileError,
   ReadCueTracksFileError,
