@@ -24,6 +24,7 @@ export const createAlignmentState = <TCue extends Cue>(
   const { cues, alignment, initialCueId } = options
 
   let marksByCueId: ReadonlyMap<CueId, TimelinePosition>
+  let rangeEndsByCueId: ReadonlyMap<CueId, TimelinePosition>
 
   if (alignment === undefined) {
     const cueValidation = validateCues(cues)
@@ -32,6 +33,7 @@ export const createAlignmentState = <TCue extends Cue>(
     }
 
     marksByCueId = new Map()
+    rangeEndsByCueId = new Map()
   } else {
     const alignmentValidation = validateAlignment(cues, alignment)
     if (Result.isFailure(alignmentValidation)) {
@@ -39,6 +41,9 @@ export const createAlignmentState = <TCue extends Cue>(
     }
 
     marksByCueId = alignmentValidation.value
+    rangeEndsByCueId = new Map(
+      (alignment.ranges ?? []).map((range) => [range.cueId, range.end]),
+    )
   }
 
   let currentIndex = asCueIndex(0)
@@ -53,6 +58,7 @@ export const createAlignmentState = <TCue extends Cue>(
 
   return Result.succeed({
     marksByCueId,
+    rangeEndsByCueId,
     currentIndex,
     history: [],
   })
