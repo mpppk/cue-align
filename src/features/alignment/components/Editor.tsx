@@ -1,14 +1,19 @@
 import { Result } from '@praha/byethrow'
 import { useMemo, useRef, useState } from 'react'
 
-import { asTimelinePosition, createAlignmentState } from '@mpppk/cue-align-core'
+import {
+  asTimelinePosition,
+  createMultiTrackAlignmentState,
+} from '@mpppk/cue-align-core'
 import type {
   AdjustMarkError,
-  AlignmentState,
+  MultiTrackAlignmentState,
   CueId,
   SeekCueError,
+  SelectTrackError,
+  TrackId,
 } from '@mpppk/cue-align-core'
-import { useAlignmentSession } from '@mpppk/cue-align-react'
+import { useMultiTrackAlignmentSession } from '@mpppk/cue-align-react'
 import type { AuthoringInput } from '../authoring'
 import { markForAuthoringMode } from '../authoringMode'
 import type { AuthoringMode } from '../authoringMode'
@@ -29,10 +34,10 @@ type EditorProps = {
 }
 
 type ReadyEditorProps = EditorProps & {
-  initialState: AlignmentState
+  initialState: MultiTrackAlignmentState
 }
 
-type WaveformEditError = SeekCueError | AdjustMarkError
+type EditorInteractionError = SeekCueError | AdjustMarkError | SelectTrackError
 
 const formatPlaybackTime = (seconds: number): string => {
   const wholeMinutes = Math.floor(seconds / 60)
@@ -53,8 +58,9 @@ function ReadyEditor({
   const [authoringMode, setAuthoringMode] =
     useState<AuthoringMode>('sequential')
   const [exportError, setExportError] = useState<AlignmentExportError>()
-  const [waveformError, setWaveformError] = useState<WaveformEditError>()
-  const session = useAlignmentSession(authoring.cues, initialState)
+  const [interactionError, setInteractionError] =
+    useState<EditorInteractionError>()
+  const session = useMultiTrackAlignmentSession(authoring.tracks, initialState)
   const shortcutError = useAlignmentShortcuts({
     mediaRef,
     actions: {
@@ -70,13 +76,15 @@ function ReadyEditor({
       goToNextCue: session.goToNextCue,
     },
   })
-  const visibleError = shortcutError ?? waveformError ?? exportError
+  const visibleError = shortcutError ?? interactionError ?? exportError
   const mediaKind = getMediaKind(mediaFile)
   const isComplete = session.totalCount > 0 && session.isComplete
 
   const handleExport = () => {
+    const alignment =
+      session.trackCount === 1 ? session.alignment : session.multiTrackAlignment
     const result = downloadAlignment(
-      session.alignment,
+      alignment,
       `${mediaFile.name}.alignment.json`,
     )
     if (Result.isFailure(result)) {
@@ -102,22 +110,32 @@ function ReadyEditor({
   const handleCueSelect = (cueId: CueId) => {
     const result = session.seekCue(cueId)
     if (Result.isFailure(result)) {
-      setWaveformError(result.error)
+      setInteractionError(result.error)
       return
     }
 
     setAuthoringMode('selection')
-    setWaveformError(undefined)
+    setInteractionError(undefined)
+  }
+
+  const handleTrackSelect = (trackId: TrackId) => {
+    const result = session.selectTrack(trackId)
+    if (Result.isFailure(result)) {
+      setInteractionError(result.error)
+      return
+    }
+
+    setInteractionError(undefined)
   }
 
   const handleWaveformMarkAdjust = (cueId: CueId, at: number) => {
     const result = session.adjustMark(cueId, asTimelinePosition(at))
     if (Result.isFailure(result)) {
-      setWaveformError(result.error)
+      setInteractionError(result.error)
       return
     }
 
-    setWaveformError(undefined)
+    setInteractionError(undefined)
     handleWaveformSeek(at)
   }
 
@@ -144,6 +162,29 @@ function ReadyEditor({
           </button>
         </div>
       </div>
+
+      {session.trackCount > 1 ? (
+        <div className="authoring-mode-toolbar">
+          <div
+            className="authoring-mode-switch"
+            role="group"
+            aria-label="Cue track"
+          >
+            {authoring.tracks.map((track) => (
+              <button
+                className="secondary-button"
+                type="button"
+                key={track.id}
+                aria-pressed={session.currentTrackId === track.id}
+                onClick={() => handleTrackSelect(track.id)}
+              >
+                {track.label ?? track.id}
+              </button>
+            ))}
+          </div>
+          <p>Track ごとに Cue、Mark、Undo 履歴を独立して編集します。</p>
+        </div>
+      ) : null}
 
       <div className="authoring-mode-toolbar">
         <div
@@ -206,8 +247,8 @@ function ReadyEditor({
 
       {isComplete ? (
         <div className="completion-message" role="status" aria-live="polite">
-          <strong>Alignment complete</strong>
-          <span>すべての Cue が Mark 済みです。結果を保存できます。</span>
+          <strong>Track alignment complete</strong>
+          <span>選択中の Track のすべての Cue が Mark 済みです。</span>
         </div>
       ) : null}
 
@@ -219,7 +260,7 @@ function ReadyEditor({
       />
 
       <CueList
-        cues={authoring.cues}
+        cues={session.currentTrack.cues}
         alignment={session.alignment}
         currentCueId={session.currentCue?.id}
         onSelectCue={handleCueSelect}
@@ -238,11 +279,11 @@ function ReadyEditor({
 export function Editor({ authoring, mediaFile, onBack }: EditorProps) {
   const initialStateResult = useMemo(
     () =>
-      createAlignmentState({
-        cues: authoring.cues,
+      createMultiTrackAlignmentState({
+        tracks: authoring.tracks,
         alignment: authoring.alignment,
       }),
-    [authoring.alignment, authoring.cues],
+    [authoring.alignment, authoring.tracks],
   )
 
   if (Result.isFailure(initialStateResult)) {
