@@ -33,7 +33,7 @@
     "@types/react": "^19.2.0",
     "react": "^19.2.0",
     "typescript": "^7.0.0",
-    "vite-plus": "0.2.8",
+    "vite-plus": "0.3.3",
     "vitest": "4.1.11"
   }
 }
