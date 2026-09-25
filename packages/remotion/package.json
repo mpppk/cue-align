@@ -31,6 +31,6 @@
     "@praha/byethrow-testing": "^0.12.0",
     "typescript": "^7.0.0",
     "vite-plus": "0.2.8",
-    "vitest": "4.1.11"
+    "vitest": "5.0.2"
   }
 }
