@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@mpppk/cue-align-core": "file:../core",
-    "@praha/byethrow": "^0.12.0"
+    "@praha/byethrow": "^0.13.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"
