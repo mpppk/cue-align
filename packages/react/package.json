@@ -29,7 +29,7 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "@praha/byethrow-testing": "^0.12.0",
+    "@praha/byethrow-testing": "^0.13.0",
     "@types/react": "^19.2.0",
     "react": "^19.2.0",
     "typescript": "^7.0.0",
