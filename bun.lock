@@ -18,7 +18,7 @@
       "devDependencies": {
         "@cloudflare/vite-plugin": "^1.26.0",
         "@praha/byethrow-oxlint": "^0.12.0",
-        "@praha/byethrow-testing": "^0.12.0",
+        "@praha/byethrow-testing": "^0.13.0",
         "@tanstack/router-cli": "^1.132.0",
         "@types/node": "^26.0.0",
         "@types/react": "^19.2.0",
@@ -330,7 +330,7 @@
 
     "@praha/byethrow-oxlint": ["@praha/byethrow-oxlint@0.12.0", "", { "dependencies": { "@oxlint/plugins": "^1.68.0" }, "peerDependencies": { "@praha/byethrow": "0.12.0", "oxlint": "^1.0.0" } }, "sha512-zdg/oa50/N+a62FsCVHz/J+9RnuaIWZVzwo9frIXZdyPuNNHRYBCee9AwCnfYinOQ6dLOzFmOS9lATnw/MDGdQ=="],
 
-    "@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
+    "@praha/byethrow-testing": ["@praha/byethrow-testing@0.13.0", "", { "peerDependencies": { "@praha/byethrow": "0.13.0" } }, "sha512-VlkbqEbX5QFCurzXj0+5sJL7DtPfAy00NPAs2g7KCPauu5T2gffbv6iba0eRjVFdP7Nkw/xtptJWBgkT1RPMLA=="],
 
     "@praha/error-factory": ["@praha/error-factory@1.4.1", "", {}, "sha512-HA+y+xwmQIl9EPvZonRk1/hsSAvAlpDjlpruyW8kTAQ++Oq5Fi7hFV0Y84TLHXJ6SciYHlKGqrekrS5wzkD5+Q=="],
 
@@ -806,9 +806,15 @@
 
     "@jridgewell/remapping/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@mpppk/cue-align-react/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", {}],
+    "@mpppk/cue-align-core/@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
 
-    "@mpppk/cue-align-remotion/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", {}],
+    "@mpppk/cue-align-react/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", { "dependencies": { "@praha/byethrow": "^0.12.0", "@praha/error-factory": "^1.4.1" }, "devDependencies": { "@praha/byethrow-testing": "^0.12.0", "typescript": "^7.0.0", "vite-plus": "0.2.8", "vitest": "4.1.11" } }],
+
+    "@mpppk/cue-align-react/@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
+
+    "@mpppk/cue-align-remotion/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", { "dependencies": { "@praha/byethrow": "^0.12.0", "@praha/error-factory": "^1.4.1" }, "devDependencies": { "@praha/byethrow-testing": "^0.12.0", "typescript": "^7.0.0", "vite-plus": "0.2.8", "vitest": "4.1.11" } }],
+
+    "@mpppk/cue-align-remotion/@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
 
     "@vitest/browser/ws": ["ws@8.21.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="],
 
