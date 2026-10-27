@@ -17,7 +17,7 @@
       },
       "devDependencies": {
         "@cloudflare/vite-plugin": "^1.26.0",
-        "@praha/byethrow-oxlint": "^0.12.0",
+        "@praha/byethrow-oxlint": "^0.13.0",
         "@praha/byethrow-testing": "^0.12.0",
         "@tanstack/router-cli": "^1.132.0",
         "@types/node": "^26.0.0",
@@ -316,7 +316,7 @@
 
     "@oxlint/binding-win32-x64-msvc": ["@oxlint/binding-win32-x64-msvc@1.76.0", "", { "os": "win32", "cpu": "x64" }, "sha512-5qcirPHO8nKfkoowEVWtpAoVTcYDy6g0UT0NGic450Qv8J2NrOqg4uQ8QppRP4MDTC7Xx47lbZnmadTH03CGGA=="],
 
-    "@oxlint/plugins": ["@oxlint/plugins@1.73.0", "", {}, "sha512-OhgMQeMmZA0dcFcX4/priaJZWdFECxiClgq6mRX6aatZEcV9PbKC3P3/v8U1hVjviT1i5U+vR8lAtBV6m4FXAA=="],
+    "@oxlint/plugins": ["@oxlint/plugins@1.90.0", "", {}, "sha512-FT0JJDNbj9oobVWHpAzFckHY/bx1ftPjulBx4UCMXqmDUGqVWOkbKe5bj4zdEL+D5Ud7y/RfioLwSvlHBMjI4w=="],
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
@@ -328,7 +328,7 @@
 
     "@praha/byethrow": ["@praha/byethrow@0.12.0", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" }, "peerDependencies": { "typescript": ">=5.0.0" } }, "sha512-Q3dRHW8aGqYbEe/W5YKrik6GbtfLGdCrCVcDcP/YJe4uhhbbrkEw9XoRuPZhfMb4uLrUXk27h4phK3I8+cAdRw=="],
 
-    "@praha/byethrow-oxlint": ["@praha/byethrow-oxlint@0.12.0", "", { "dependencies": { "@oxlint/plugins": "^1.68.0" }, "peerDependencies": { "@praha/byethrow": "0.12.0", "oxlint": "^1.0.0" } }, "sha512-zdg/oa50/N+a62FsCVHz/J+9RnuaIWZVzwo9frIXZdyPuNNHRYBCee9AwCnfYinOQ6dLOzFmOS9lATnw/MDGdQ=="],
+    "@praha/byethrow-oxlint": ["@praha/byethrow-oxlint@0.13.0", "", { "dependencies": { "@oxlint/plugins": "^1.77.0" }, "peerDependencies": { "@praha/byethrow": "0.13.0", "oxlint": "^1.0.0" } }, "sha512-cXbTuQsrC/DVRn6mj7xYTXpIQCCdCBTKabBGU2vPMle2fe+WV1z+GcBKZorJSS3T8h6Q82or4D96JvPYRH0faw=="],
 
     "@praha/byethrow-testing": ["@praha/byethrow-testing@0.12.0", "", { "peerDependencies": { "@praha/byethrow": "0.12.0" } }, "sha512-DyohuFuOVFyks0eCZnWIZzpKmei4iPxBqfPJGRPtM+32xJe++112xSN5KO3CsfZO7GcfISMlVSjVUuSQFWs+GA=="],
 
@@ -806,13 +806,15 @@
 
     "@jridgewell/remapping/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@mpppk/cue-align-react/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", {}],
+    "@mpppk/cue-align-react/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", { "dependencies": { "@praha/byethrow": "^0.12.0", "@praha/error-factory": "^1.4.1" }, "devDependencies": { "@praha/byethrow-testing": "^0.12.0", "typescript": "^7.0.0", "vite-plus": "0.2.8", "vitest": "4.1.11" } }],
 
-    "@mpppk/cue-align-remotion/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", {}],
+    "@mpppk/cue-align-remotion/@mpppk/cue-align-core": ["@mpppk/cue-align-core@file:packages/core", { "dependencies": { "@praha/byethrow": "^0.12.0", "@praha/error-factory": "^1.4.1" }, "devDependencies": { "@praha/byethrow-testing": "^0.12.0", "typescript": "^7.0.0", "vite-plus": "0.2.8", "vitest": "4.1.11" } }],
 
     "@vitest/browser/ws": ["ws@8.21.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="],
 
     "pretty-format/ansi-styles": ["ansi-styles@5.2.0", "", {}, "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA=="],
+
+    "vite-plus/@oxlint/plugins": ["@oxlint/plugins@1.73.0", "", {}, "sha512-OhgMQeMmZA0dcFcX4/priaJZWdFECxiClgq6mRX6aatZEcV9PbKC3P3/v8U1hVjviT1i5U+vR8lAtBV6m4FXAA=="],
 
     "vitest/@vitest/expect": ["@vitest/expect@4.1.11", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "@types/chai": "^5.2.2", "@vitest/spy": "4.1.11", "@vitest/utils": "4.1.11", "chai": "^6.2.2", "tinyrainbow": "^3.1.0" } }, "sha512-VX2x5vNJXET47KAFzwERI+KRMtTTCSWTfSMKsW7JsUsXV4psq++e3DvZpuTDOpHcxytiDs6p2nhVb2tVDiiUYw=="],
 
