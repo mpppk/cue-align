@@ -22,7 +22,7 @@
     "@mpppk/cue-align-core": "file:packages/core",
     "@mpppk/cue-align-react": "file:packages/react",
     "@mpppk/cue-align-remotion": "file:packages/remotion",
-    "@praha/byethrow": "^0.12.0",
+    "@praha/byethrow": "^0.13.0",
     "@praha/error-factory": "^1.4.1",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
